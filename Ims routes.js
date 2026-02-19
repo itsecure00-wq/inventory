@@ -15,26 +15,38 @@
  * ?page=dashboard → 店长看板
  */
 function doGet(e) {
-  var page = (e && e.parameter && e.parameter.page) ? e.parameter.page : 'login';
-  
-  var template;
-  switch (page) {
-    case 'check':
-      template = HtmlService.createTemplateFromFile('CheckPage');
-      break;
-    case 'dashboard':
-      template = HtmlService.createTemplateFromFile('StockDashboard');
-      break;
-    case 'login':
-    default:
-      template = HtmlService.createTemplateFromFile('Login');
-      break;
+  try {
+    var page = (e && e.parameter && e.parameter.page) ? e.parameter.page : 'login';
+
+    var template;
+    switch (page) {
+      case 'check':
+        template = HtmlService.createTemplateFromFile('CheckPage');
+        break;
+      case 'dashboard':
+        template = HtmlService.createTemplateFromFile('StockDashboard');
+        break;
+      case 'login':
+      default:
+        template = HtmlService.createTemplateFromFile('Login');
+        break;
+    }
+
+    return template.evaluate()
+      .setTitle('张重辉火锅 · 库存管理')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1');
+  } catch (err) {
+    Logger.log('doGet error: ' + err.message + ' | page=' + (e && e.parameter ? e.parameter.page : 'none'));
+    return HtmlService.createHtmlOutput(
+      '<div style="padding:40px;text-align:center;font-family:sans-serif">' +
+      '<h3 style="color:#d32f2f">⚠️ 系统加载错误</h3>' +
+      '<p style="color:#666">' + err.message + '</p>' +
+      '<p style="color:#999;font-size:13px">Page: ' + (e && e.parameter ? e.parameter.page : 'none') + '</p>' +
+      '<a href="' + ScriptApp.getService().getUrl() + '?page=login" style="color:#d32f2f">返回登录</a>' +
+      '</div>'
+    ).setTitle('张重辉火锅 · 错误');
   }
-  
-  return template.evaluate()
-    .setTitle('张重辉火锅 · 库存管理')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1');
 }
 
 /**
