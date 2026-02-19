@@ -60,10 +60,13 @@
     </button>
   </div>
   
-  <div class="mt-3" style="font-size:12px;color:#bbb">v1.1 · IMS</div>
+  <div class="mt-3" style="font-size:12px;color:#bbb">v1.2 · IMS</div>
 </div>
 
 <script>
+  var loginAttempts = 0;
+  var lockUntil = 0;
+
   // 记住登录
   window.onload = function() {
     var saved = localStorage.getItem('ims_user');
@@ -100,7 +103,15 @@
     var username = document.getElementById('username').value.trim();
     var password = document.getElementById('password').value.trim();
     var errorEl = document.getElementById('errorMsg');
-    
+
+    // 频率限制: 连续失败 5 次，锁定 60 秒
+    if (Date.now() < lockUntil) {
+      var secs = Math.ceil((lockUntil - Date.now()) / 1000);
+      errorEl.textContent = '登录过于频繁，请 ' + secs + ' 秒后再试';
+      errorEl.style.display = 'block';
+      return;
+    }
+
     if (!username || !password) {
       errorEl.textContent = '请输入员工编号和密码';
       errorEl.style.display = 'block';
@@ -120,11 +131,17 @@
         document.getElementById('btnSpinner').style.display = 'none';
         
         if (result.success) {
-          // 保存登录
+          loginAttempts = 0; // 重置
           localStorage.setItem('ims_user', JSON.stringify(result));
           redirectByRole(result.role);
         } else {
-          errorEl.textContent = result.error || '登录失败';
+          loginAttempts++;
+          if (loginAttempts >= 5) {
+            lockUntil = Date.now() + 60000; // 锁定 60 秒
+            errorEl.textContent = '连续失败 5 次，请 60 秒后再试';
+          } else {
+            errorEl.textContent = (result.error || '登录失败') + ' (' + loginAttempts + '/5)';
+          }
           errorEl.style.display = 'block';
           document.getElementById('password').value = '';
           document.getElementById('password').focus();

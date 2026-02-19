@@ -147,27 +147,33 @@ function updatePOStatus(poId, status) {
     var sheet = getSheet_(IMS_CONFIG.SHEETS.PO);
     var data = sheet.getDataRange().getValues();
     var updated = 0;
-    
+    var itemsToStock = []; // 先收集，再入库
+
     for (var i = 1; i < data.length; i++) {
       if (data[i][0] === poId) {
-        sheet.getRange(i + 1, 12).setValue(status); // Status 列
+        // 防止重复到货: 只有 "待采购" 或 "已下单" 状态才能改为 "已到货"
+        if (status === '已到货' && data[i][11] === '已到货') continue;
+
+        sheet.getRange(i + 1, 12).setValue(status);
         updated++;
-      }
-    }
-    
-    // 如果到货，更新库存
-    if (status === '已到货') {
-      for (var j = 1; j < data.length; j++) {
-        if (data[j][0] === poId) {
-          var itemId = data[j][3];
-          var orderQty = Number(data[j][6]) || 0;
-          addStock_(itemId, orderQty);
+
+        // 收集到货入库数据
+        if (status === '已到货') {
+          itemsToStock.push({
+            itemId: data[i][3],
+            orderQty: Number(data[i][6]) || 0
+          });
         }
       }
     }
-    
+
+    // 统一入库 (用收集的数据，避免二次遍历旧数据)
+    for (var j = 0; j < itemsToStock.length; j++) {
+      addStock_(itemsToStock[j].itemId, itemsToStock[j].orderQty);
+    }
+
     return { success: true, updated: updated, poId: poId, newStatus: status };
-    
+
   } catch (e) {
     return { success: false, error: e.message };
   }

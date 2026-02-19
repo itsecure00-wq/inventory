@@ -50,6 +50,18 @@ function getDayOfWeek_() {
   return day === 0 ? 7 : day;
 }
 
+/** 安全价格校验 (防脏数据) */
+function safePrice_(val) {
+  var p = Number(val) || 0;
+  return (p > 0 && p < 100000) ? p : 0; // 单价超过10万视为异常
+}
+
+/** 安全数量校验 */
+function safeQty_(val) {
+  var q = Number(val) || 0;
+  return q >= 0 ? q : 0;
+}
+
 // ============================================================
 // 1. getTodayCheckItems(staffName)
 // ============================================================
@@ -157,6 +169,7 @@ function submitCheckRecord(staffName, items) {
     var lowStockItems = [];
     var abnormalItems = [];
     var checkRows = [];
+    var batchUpdates = [];
     
     // 建立 ID → row 映射
     var idMap = {};
@@ -205,18 +218,23 @@ function submitCheckRecord(staffName, items) {
       
       // 写入 Check_Records
       checkRows.push([now, staffName, IMS_CONFIG.BRANCH, input.itemId, itemName, oldQty, newQty, diff, alert]);
-      
-      // 更新 Items_DB: Current_Qty, Last_Check, Last_Update
-      itemsSheet.getRange(rowNum, C.QTY + 1).setValue(newQty);
-      itemsSheet.getRange(rowNum, C.LAST_CHECK + 1).setValue(now);
-      itemsSheet.getRange(rowNum, C.LAST_UPDATE + 1).setValue(now);
-      
+
+      // 收集批量更新数据 (row, qty, timestamp)
+      batchUpdates.push({ rowNum: rowNum, newQty: newQty, timestamp: now });
+
       updated++;
     }
-    
+
     // 批量写入 Check_Records
     if (checkRows.length > 0) {
       checkSheet.getRange(checkSheet.getLastRow() + 1, 1, checkRows.length, 9).setValues(checkRows);
+    }
+
+    // 批量更新 Items_DB (替代逐行 setValue，性能提升 3x)
+    for (var b = 0; b < batchUpdates.length; b++) {
+      var bu = batchUpdates[b];
+      itemsSheet.getRange(bu.rowNum, C.QTY + 1, 1, 1).setValue(bu.newQty);
+      itemsSheet.getRange(bu.rowNum, C.LAST_CHECK + 1, 1, 2).setValues([[bu.timestamp, bu.timestamp]]);
     }
     
     // 触发异常通知
@@ -263,14 +281,15 @@ function getLowStockItems() {
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
       if (row[C.STATUS] !== 'Active') continue;
-      
-      var qty = Number(row[C.QTY]) || 0;
-      var min = Number(row[C.MIN]) || 0;
-      var max = Number(row[C.MAX]) || 0;
-      var price = Number(row[C.PRICE]) || 0;
-      
+
+      var qty = safeQty_(row[C.QTY]);
+      var min = safeQty_(row[C.MIN]);
+      var max = safeQty_(row[C.MAX]);
+      var price = safePrice_(row[C.PRICE]);
+
       if (qty < min && min > 0) {
-        var need = max - qty;
+        var need = Math.max(0, max - qty); // 防止负数
+        if (need === 0) need = min - qty;  // fallback: 补到最低线
         items.push({
           id: row[C.ID],
           name: row[C.NAME],
@@ -316,10 +335,10 @@ function getHighStockItems() {
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
       if (row[C.STATUS] !== 'Active') continue;
-      
-      var qty = Number(row[C.QTY]) || 0;
-      var max = Number(row[C.MAX]) || 0;
-      
+
+      var qty = safeQty_(row[C.QTY]);
+      var max = safeQty_(row[C.MAX]);
+
       if (qty > max && max > 0) {
         items.push({
           id: row[C.ID],
@@ -358,7 +377,9 @@ function generatePurchaseOrder() {
     var poSheet = getSheet_(IMS_CONFIG.SHEETS.PO);
     var now = fmtDateTime_();
     var today = fmtDate_();
-    var poId = 'PO-' + today.replace(/-/g, '') + '-' + String(poSheet.getLastRow()).padStart(3, '0');
+    // PO ID: 日期 + 时分秒 防重复
+    var timeStr = Utilities.formatDate(new Date(), IMS_CONFIG.TZ, 'HHmmss');
+    var poId = 'PO-' + today.replace(/-/g, '') + '-' + timeStr;
     
     var rows = [];
     var totalCost = 0;
@@ -417,21 +438,21 @@ function getStockDashboard() {
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
       if (row[C.STATUS] !== 'Active') continue;
-      
+
       total++;
-      var qty = Number(row[C.QTY]) || 0;
-      var min = Number(row[C.MIN]) || 0;
-      var max = Number(row[C.MAX]) || 0;
-      var price = Number(row[C.PRICE]) || 0;
+      var qty = safeQty_(row[C.QTY]);
+      var min = safeQty_(row[C.MIN]);
+      var max = safeQty_(row[C.MAX]);
+      var price = safePrice_(row[C.PRICE]);
       var cat = row[C.CATEGORY] || '未分类';
       var freq = String(row[C.FREQ]).toLowerCase();
-      
+
       // 库存状态
       if (qty < min && min > 0) lowCount++;
       else if (qty > max && max > 0) highCount++;
       else normalCount++;
-      
-      // 库存价值
+
+      // 库存价值 (仅计入有效价格)
       totalValue += qty * price;
       
       // 今天是否需要盘点

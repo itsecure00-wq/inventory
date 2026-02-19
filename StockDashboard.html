@@ -7,13 +7,13 @@
   <style>
     :root { --brand: #d32f2f; --green: #2e7d32; --orange: #f57c00; --blue: #1565c0; }
     body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding-bottom: 90px; }
-    
+
     .top-bar {
       background: var(--brand); color: white; padding: 16px 20px;
       position: sticky; top: 0; z-index: 100;
     }
     .top-bar h6 { margin: 0; font-weight: 700; }
-    
+
     .stat-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 16px; }
     .stat-card {
       background: white; border-radius: 12px; padding: 14px; text-align: center;
@@ -21,12 +21,12 @@
     }
     .stat-num { font-size: 28px; font-weight: 700; line-height: 1.2; }
     .stat-label { font-size: 11px; color: #888; }
-    
+
     .section-title {
       padding: 8px 20px; font-size: 14px; font-weight: 600; color: #666;
       background: #f0f0f0; border-bottom: 1px solid #e0e0e0;
     }
-    
+
     .low-item {
       background: white; padding: 14px 20px; border-bottom: 1px solid #f0f0f0;
       display: flex; align-items: center; gap: 12px;
@@ -44,23 +44,35 @@
     .low-need { font-size: 14px; font-weight: 600; color: var(--brand); }
     .low-cost { font-size: 11px; color: #888; }
     .low-supplier { font-size: 11px; color: var(--blue); }
-    
+
     .high-item {
       background: white; padding: 12px 20px; border-bottom: 1px solid #f0f0f0;
       display: flex; align-items: center; justify-content: space-between;
     }
-    
+
     .check-progress {
       background: white; padding: 16px 20px; margin: 10px 16px; border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
     .progress { height: 8px; border-radius: 4px; }
-    
+
     .summary-box {
       background: white; margin: 10px 16px; padding: 16px; border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
-    
+
+    .cat-stats {
+      background: white; margin: 10px 16px; padding: 16px; border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .cat-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px;
+    }
+    .cat-row:last-child { border-bottom: none; }
+    .cat-row .cat-name { font-weight: 500; }
+    .cat-row .cat-low { color: var(--brand); font-weight: 600; font-size: 12px; }
+
     .bottom-bar {
       position: fixed; bottom: 0; left: 0; right: 0; background: white;
       padding: 12px 16px; box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
@@ -72,7 +84,7 @@
     }
     .btn-po.primary { background: var(--brand); }
     .btn-po.whatsapp { background: #25d366; }
-    
+
     .loading { text-align: center; padding: 60px 20px; color: #999; }
     .loading .spinner-border { color: var(--brand); width: 40px; height: 40px; }
     .logout-btn { background: none; border: none; color: rgba(255,255,255,0.8); font-size: 13px; text-decoration: none; }
@@ -129,7 +141,7 @@
       <div class="stat-label">🟢 正常</div>
     </div>
   </div>
-  
+
   <!-- Check Progress -->
   <div class="check-progress">
     <div class="d-flex justify-content-between mb-1">
@@ -141,15 +153,33 @@
     </div>
     <div style="font-size:11px;color:#999;margin-top:4px" id="checkStaff"></div>
   </div>
-  
+
+  <!-- Value Summary -->
+  <div class="summary-box" id="valueBox">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <div style="font-size:13px;color:#888">📦 库存总值</div>
+        <div style="font-size:20px;font-weight:700;color:var(--blue)" id="totalValue">RM 0</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;color:#888">总物品</div>
+        <div style="font-size:18px;font-weight:600" id="totalItems">0</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Low Stock List -->
   <div class="section-title" id="lowTitle">🔴 需补货 (0项)</div>
   <div id="lowList"></div>
-  
+
   <!-- High Stock List -->
   <div class="section-title" id="highTitle" style="display:none">🟡 库存偏高 (0项)</div>
   <div id="highList"></div>
-  
+
+  <!-- Category Stats -->
+  <div class="section-title" id="catTitle" style="display:none">📊 分类统计</div>
+  <div class="cat-stats" id="catStats" style="display:none"></div>
+
   <!-- Purchase Summary -->
   <div class="summary-box" id="summaryBox" style="display:none">
     <div class="d-flex justify-content-between align-items-center">
@@ -179,7 +209,7 @@
   var dashboardData = null;
   var lowItems = [];
   var highItems = [];
-  
+
   window.onload = function() {
     var saved = localStorage.getItem('ims_user');
     if (!saved) { goLogin(); return; }
@@ -190,7 +220,7 @@
         return;
       }
     } catch(e) { goLogin(); return; }
-    
+
     document.getElementById('dateInfo').textContent = new Date().toLocaleDateString('zh-CN', {
       year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
     });
@@ -198,13 +228,13 @@
 
     loadAll();
   };
-  
+
   function goLogin() {
     localStorage.removeItem('ims_user');
     window.location.href = window.location.href.split('?')[0] + '?page=login';
   }
   function logout() { goLogin(); }
-  
+
   function showLoadError(msg) {
     document.getElementById('loadingDiv').style.display = 'block';
     document.getElementById('contentDiv').style.display = 'none';
@@ -213,50 +243,106 @@
       '<button class="btn btn-sm btn-outline-danger mt-3" onclick="loadAll()">重试</button>';
   }
 
+  // ============ 并行加载 3 个 API ============
   function loadAll() {
     document.getElementById('loadingDiv').style.display = 'block';
     document.getElementById('loadingDiv').innerHTML =
       '<div class="spinner-border mb-3"></div><div>加载看板数据...</div>';
     document.getElementById('contentDiv').style.display = 'none';
 
+    var loaded = { dashboard: false, low: false, high: false };
+    var errors = [];
+
+    function tryRender() {
+      if (!loaded.dashboard || !loaded.low || !loaded.high) return;
+      if (errors.length > 0 && !dashboardData) {
+        showLoadError(errors.join('; '));
+      } else {
+        renderDashboard();
+      }
+    }
+
     google.script.run.withSuccessHandler(function(result) {
       dashboardData = result;
-
-      google.script.run.withSuccessHandler(function(lowResult) {
-        lowItems = lowResult.success ? lowResult.items : [];
-
-        google.script.run.withSuccessHandler(function(highResult) {
-          highItems = highResult.success ? highResult.items : [];
-          renderDashboard();
-        }).withFailureHandler(function(err) {
-          highItems = [];
-          renderDashboard(); // still render with low items
-        }).getHighStockItems();
-      }).withFailureHandler(function(err) {
-        showLoadError('加载低库存数据失败: ' + err.message);
-      }).getLowStockItems();
+      loaded.dashboard = true;
+      tryRender();
     }).withFailureHandler(function(err) {
-      showLoadError(err.message);
+      errors.push('看板: ' + err.message);
+      loaded.dashboard = true;
+      tryRender();
     }).getStockDashboard();
+
+    google.script.run.withSuccessHandler(function(result) {
+      lowItems = result.success ? result.items : [];
+      loaded.low = true;
+      tryRender();
+    }).withFailureHandler(function(err) {
+      lowItems = [];
+      loaded.low = true;
+      tryRender();
+    }).getLowStockItems();
+
+    google.script.run.withSuccessHandler(function(result) {
+      highItems = result.success ? result.items : [];
+      loaded.high = true;
+      tryRender();
+    }).withFailureHandler(function(err) {
+      highItems = [];
+      loaded.high = true;
+      tryRender();
+    }).getHighStockItems();
   }
-  
+
   function renderDashboard() {
     document.getElementById('loadingDiv').style.display = 'none';
     document.getElementById('contentDiv').style.display = 'block';
-    
-    if (!dashboardData.success) return;
+
+    if (!dashboardData || !dashboardData.success) return;
     var d = dashboardData;
-    
+
     // Stats
     document.getElementById('lowNum').textContent = d.lowCount;
     document.getElementById('highNum').textContent = d.highCount;
     document.getElementById('normalNum').textContent = d.normalCount;
-    
+
     // Check progress
     document.getElementById('checkText').textContent = d.todayChecked + '/' + d.todayTotal;
     document.getElementById('checkBar').style.width = d.checkProgress + '%';
     document.getElementById('checkBar').style.background = d.checkProgress >= 100 ? 'var(--green)' : 'var(--brand)';
-    
+    if (d.checkProgress >= 100) {
+      document.getElementById('checkStaff').textContent = '✅ 今日盘点已完成';
+    } else if (d.todayTotal === 0) {
+      document.getElementById('checkStaff').textContent = '今日无需盘点';
+    } else {
+      document.getElementById('checkStaff').textContent = '待盘点 ' + (d.todayTotal - d.todayChecked) + ' 项';
+    }
+
+    // Value summary
+    document.getElementById('totalValue').textContent = 'RM ' + d.totalValue.toFixed(2);
+    document.getElementById('totalItems').textContent = d.total;
+
+    // Category stats
+    if (d.categoryStats) {
+      var catHtml = '';
+      var cats = Object.keys(d.categoryStats).sort(function(a, b) {
+        return d.categoryStats[b].low - d.categoryStats[a].low; // 低库存多的排前面
+      });
+      for (var c = 0; c < cats.length; c++) {
+        var cs = d.categoryStats[cats[c]];
+        catHtml += '<div class="cat-row">';
+        catHtml += '<span class="cat-name">' + cats[c] + ' <span style="color:#bbb;font-size:11px">(' + cs.total + '项)</span></span>';
+        if (cs.low > 0) {
+          catHtml += '<span class="cat-low">🔴 缺 ' + cs.low + ' 项</span>';
+        } else {
+          catHtml += '<span style="color:var(--green);font-size:12px">✅ 充足</span>';
+        }
+        catHtml += '</div>';
+      }
+      document.getElementById('catStats').innerHTML = catHtml;
+      document.getElementById('catStats').style.display = 'block';
+      document.getElementById('catTitle').style.display = 'block';
+    }
+
     // Low stock list
     document.getElementById('lowTitle').textContent = '🔴 需补货 (' + lowItems.length + '项)';
     var lowHtml = '';
@@ -268,7 +354,7 @@
         var item = lowItems[i];
         totalCost += item.totalCost;
         var urgencyClass = item.urgency < 30 ? 'urgency-critical' : 'urgency-warning';
-        
+
         lowHtml += '<div class="low-item">';
         lowHtml += '<div class="low-urgency ' + urgencyClass + '"></div>';
         lowHtml += '<div class="low-info">';
@@ -278,11 +364,15 @@
         lowHtml += '</div>';
         lowHtml += '<div class="low-action">';
         lowHtml += '<div class="low-need">+' + item.need + item.unit + '</div>';
-        lowHtml += '<div class="low-cost">≈ RM ' + item.totalCost.toFixed(2) + '</div>';
+        if (item.price > 0) {
+          lowHtml += '<div class="low-cost">≈ RM ' + item.totalCost.toFixed(2) + '</div>';
+        } else {
+          lowHtml += '<div class="low-cost" style="color:var(--orange)">未设价</div>';
+        }
         lowHtml += '</div>';
         lowHtml += '</div>';
       }
-      
+
       // Summary
       document.getElementById('summaryBox').style.display = 'block';
       document.getElementById('totalCost').textContent = 'RM ' + totalCost.toFixed(2);
@@ -290,7 +380,7 @@
       document.getElementById('bottomBar').style.display = 'flex';
     }
     document.getElementById('lowList').innerHTML = lowHtml;
-    
+
     // High stock list
     if (highItems.length > 0) {
       document.getElementById('highTitle').style.display = 'block';
@@ -306,11 +396,11 @@
       document.getElementById('highList').innerHTML = highHtml;
     }
   }
-  
+
   // ============ Actions ============
   function generatePO() {
     if (!confirm('确认生成采购单？将包含 ' + lowItems.length + ' 项低库存物品')) return;
-    
+
     google.script.run.withSuccessHandler(function(result) {
       if (result.success) {
         if (result.itemCount > 0) {
@@ -318,7 +408,7 @@
         } else {
           alert('✅ 当前无需补货');
         }
-        loadAll(); // 刷新
+        loadAll();
       } else {
         alert('❌ 生成失败: ' + result.error);
       }
@@ -326,7 +416,7 @@
       alert('❌ 错误: ' + err.message);
     }).generatePurchaseOrder();
   }
-  
+
   function sendWhatsApp() {
     google.script.run.withSuccessHandler(function(text) {
       var encoded = encodeURIComponent(text);

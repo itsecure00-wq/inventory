@@ -200,10 +200,11 @@
     
     updateProgress(checkedItems, totalItems);
     
-    // 按分类分组
+    // 预计算索引 + 按分类分组
     var grouped = {};
     var catOrder = [];
     for (var i = 0; i < allItems.length; i++) {
+      allItems[i]._idx = i; // 预计算索引，替代 indexOf
       var cat = allItems[i].category;
       if (!grouped[cat]) { grouped[cat] = []; catOrder.push(cat); }
       grouped[cat].push(allItems[i]);
@@ -226,12 +227,17 @@
       
       for (var j = 0; j < catItems.length; j++) {
         var item = catItems[j];
-        var itemIdx = allItems.indexOf(item);
+        var itemIdx = item._idx; // 使用预计算索引，避免 O(n) indexOf
         html += '<div class="item-row" id="row_' + itemIdx + '">';
         html += '<div class="item-name">' + item.name + '</div>';
         html += '<div class="item-current">系统<br><strong>' + item.currentQty + '</strong></div>';
-        html += '<input type="number" class="item-input" id="input_' + itemIdx + '" ';
-        html += 'inputmode="decimal" step="0.1" min="0" placeholder="—" ';
+        html += '<input type="number" class="item-input' + (item.checked ? ' checked' : '') + '" id="input_' + itemIdx + '" ';
+        html += 'inputmode="decimal" step="0.1" min="0" ';
+        // 已盘点的物品预填当前数量
+        if (item.checked) {
+          html += 'value="' + item.currentQty + '" ';
+        }
+        html += 'placeholder="—" ';
         html += 'data-idx="' + itemIdx + '" data-cat="' + c + '" onchange="onItemInput(this)" oninput="onItemInput(this)">';
         html += '<div class="item-unit">' + item.unit + '</div>';
         html += '<div class="diff-badge" id="diff_' + itemIdx + '"></div>';
@@ -254,6 +260,9 @@
     document.getElementById('itemsList').innerHTML = html;
     document.getElementById('itemsList').style.display = 'block';
     document.getElementById('bottomBar').style.display = 'block';
+
+    // 初始化已预填的计数
+    updateFilledCount();
   }
   
   // ============ 交互 ============
