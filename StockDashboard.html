@@ -87,8 +87,37 @@
 
     .loading { text-align: center; padding: 60px 20px; color: #999; }
     .loading .spinner-border { color: var(--brand); width: 40px; height: 40px; }
-    .logout-btn { background: none; border: none; color: rgba(255,255,255,0.8); font-size: 13px; text-decoration: none; }
+    .nav-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px; color: white; font-size: 13px; font-weight: 500;
+      padding: 8px 12px; min-height: 44px; min-width: 44px;
+      justify-content: center; text-decoration: none; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn:active { background: rgba(255,255,255,0.3); }
+    .nav-btn i { font-size: 16px; }
     .empty-state { text-align: center; padding: 30px; color: #999; font-size: 14px; }
+
+    .all-stock-cat {
+      background: #f8f8f8; padding: 10px 20px; font-size: 13px; font-weight: 600;
+      color: #666; border-bottom: 1px solid #eee; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .all-stock-cat:active { background: #f0f0f0; }
+    .all-stock-item {
+      background: white; padding: 10px 20px; border-bottom: 1px solid #f5f5f5;
+      display: flex; align-items: center; gap: 8px; font-size: 13px;
+    }
+    .stock-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .stock-dot.low { background: var(--brand); }
+    .stock-dot.high { background: var(--orange); }
+    .stock-dot.ok { background: var(--green); }
+    .all-stock-name { flex: 1; font-weight: 500; }
+    .all-stock-qty { text-align: right; min-width: 70px; }
+    .all-stock-qty .qty-num { font-weight: 600; font-size: 14px; }
+    .all-stock-qty .qty-range { font-size: 11px; color: #aaa; }
 
     @media (max-width: 360px) {
       .stat-cards { grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 10px; }
@@ -97,6 +126,8 @@
       .low-item { padding: 10px 14px; gap: 8px; }
       .low-name { font-size: 13px; }
       .btn-po { font-size: 12px; padding: 10px; }
+      .nav-btn { padding: 6px 8px; font-size: 12px; gap: 2px; }
+      .nav-btn i { font-size: 14px; }
     }
   </style>
 </head>
@@ -109,10 +140,10 @@
       <h6>🍲 张重辉火锅 · 百万镇 补货看板</h6>
       <small id="dateInfo"></small>
     </div>
-    <div>
-      <a class="logout-btn" id="checkLink" style="margin-right:6px" title="盘点"><i class="bi bi-clipboard-check"></i></a>
-      <button class="logout-btn" onclick="loadAll()" title="刷新"><i class="bi bi-arrow-clockwise"></i></button>
-      <button class="logout-btn" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button>
+    <div style="display:flex;gap:6px;align-items:center">
+      <a class="nav-btn" id="checkLink" title="盘点"><i class="bi bi-clipboard-check"></i> 盘点</a>
+      <button class="nav-btn" onclick="loadAll()" title="刷新"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+      <button class="nav-btn" onclick="logout()" title="登出"><i class="bi bi-box-arrow-right"></i> 登出</button>
     </div>
   </div>
 </div>
@@ -180,6 +211,10 @@
   <div class="section-title" id="catTitle" style="display:none">📊 分类统计</div>
   <div class="cat-stats" id="catStats" style="display:none"></div>
 
+  <!-- All Stock Items -->
+  <div class="section-title" id="allStockTitle" style="display:none">📦 全部库存</div>
+  <div id="allStockList"></div>
+
   <!-- Purchase Summary -->
   <div class="summary-box" id="summaryBox" style="display:none">
     <div class="d-flex justify-content-between align-items-center">
@@ -209,10 +244,18 @@
   var dashboardData = null;
   var lowItems = [];
   var highItems = [];
+  var allStockItems = [];
 
   window.onload = function() {
     var saved = localStorage.getItem('ims_user');
-    if (!saved) { goLogin(); return; }
+    if (!saved) {
+      document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999">' +
+        '<div style="font-size:36px;margin-bottom:12px">🔒</div>' +
+        '<div style="font-size:15px">未检测到登录信息，正在跳转登录...</div>' +
+        '<div style="font-size:12px;color:#ccc;margin-top:8px">如反复出现，请确认使用正确的网址</div></div>';
+      setTimeout(function() { goLogin(); }, 1500);
+      return;
+    }
     try {
       var user = JSON.parse(saved);
       if (user.role === 'Staff') {
@@ -250,11 +293,11 @@
       '<div class="spinner-border mb-3"></div><div>加载看板数据...</div>';
     document.getElementById('contentDiv').style.display = 'none';
 
-    var loaded = { dashboard: false, low: false, high: false };
+    var loaded = { dashboard: false, low: false, high: false, all: false };
     var errors = [];
 
     function tryRender() {
-      if (!loaded.dashboard || !loaded.low || !loaded.high) return;
+      if (!loaded.dashboard || !loaded.low || !loaded.high || !loaded.all) return;
       if (errors.length > 0 && !dashboardData) {
         showLoadError(errors.join('; '));
       } else {
@@ -291,6 +334,16 @@
       loaded.high = true;
       tryRender();
     }).getHighStockItems();
+
+    google.script.run.withSuccessHandler(function(result) {
+      allStockItems = result.success ? result.items : [];
+      loaded.all = true;
+      tryRender();
+    }).withFailureHandler(function(err) {
+      allStockItems = [];
+      loaded.all = true;
+      tryRender();
+    }).getItemsByCategory('');
   }
 
   function renderDashboard() {
@@ -395,6 +448,62 @@
       }
       document.getElementById('highList').innerHTML = highHtml;
     }
+
+    // ====== All stock items grouped by category ======
+    if (allStockItems.length > 0) {
+      document.getElementById('allStockTitle').style.display = 'block';
+      document.getElementById('allStockTitle').textContent = '📦 全部库存 (' + allStockItems.length + '项)';
+
+      var catGroups = {}, catOrder = [];
+      var catIcons = { '肉类':'🥩','菜类':'🥬','海鲜':'🦐','丸子':'🍜','锅底':'🫕','调味料':'🧂','酒水':'🍺','消耗品':'🧻','甜品':'🍰','饮品类':'🥤' };
+
+      for (var a = 0; a < allStockItems.length; a++) {
+        var ai = allStockItems[a];
+        var cat = ai.category || '未分类';
+        if (!catGroups[cat]) { catGroups[cat] = []; catOrder.push(cat); }
+        catGroups[cat].push(ai);
+      }
+
+      var allHtml = '';
+      for (var ci = 0; ci < catOrder.length; ci++) {
+        var cn = catOrder[ci];
+        var cItems = catGroups[cn];
+        var cIcon = catIcons[cn] || '📦';
+        var cId = 'allCat_' + ci;
+        var cLow = 0, cHigh = 0;
+        for (var si = 0; si < cItems.length; si++) {
+          if (cItems[si].currentQty < cItems[si].minStock && cItems[si].minStock > 0) cLow++;
+          else if (cItems[si].currentQty > cItems[si].maxStock && cItems[si].maxStock > 0) cHigh++;
+        }
+        var cStatus = '';
+        if (cLow > 0) cStatus += '<span style="color:var(--brand)">🔴' + cLow + '</span> ';
+        if (cHigh > 0) cStatus += '<span style="color:var(--orange)">🟡' + cHigh + '</span> ';
+        cStatus += '<span style="color:var(--green)">🟢' + (cItems.length - cLow - cHigh) + '</span>';
+
+        allHtml += '<div class="all-stock-cat" onclick="toggleCatAll(\'' + cId + '\',this)">';
+        allHtml += '<span>' + cIcon + ' ' + cn + ' (' + cItems.length + ')</span>';
+        allHtml += '<span>' + cStatus + ' <i class="bi bi-chevron-right"></i></span>';
+        allHtml += '</div>';
+        allHtml += '<div id="' + cId + '" style="display:none">';
+
+        for (var ii = 0; ii < cItems.length; ii++) {
+          var si2 = cItems[ii];
+          var dotClass = 'ok';
+          if (si2.currentQty < si2.minStock && si2.minStock > 0) dotClass = 'low';
+          else if (si2.currentQty > si2.maxStock && si2.maxStock > 0) dotClass = 'high';
+
+          allHtml += '<div class="all-stock-item">';
+          allHtml += '<div class="stock-dot ' + dotClass + '"></div>';
+          allHtml += '<div class="all-stock-name">' + si2.name + '</div>';
+          allHtml += '<div class="all-stock-qty">';
+          allHtml += '<div class="qty-num">' + si2.currentQty + ' ' + si2.unit + '</div>';
+          allHtml += '<div class="qty-range">' + si2.minStock + '~' + si2.maxStock + '</div>';
+          allHtml += '</div></div>';
+        }
+        allHtml += '</div>';
+      }
+      document.getElementById('allStockList').innerHTML = allHtml;
+    }
   }
 
   // ============ Actions ============
@@ -424,6 +533,19 @@
     }).withFailureHandler(function(err) {
       alert('获取采购单失败: ' + err.message);
     }).getPurchaseOrderText();
+  }
+
+  function toggleCatAll(catId, header) {
+    var el = document.getElementById(catId);
+    if (!el) return;
+    var icon = header.querySelector('.bi');
+    if (el.style.display === 'none') {
+      el.style.display = 'block';
+      if (icon) icon.className = 'bi bi-chevron-down';
+    } else {
+      el.style.display = 'none';
+      if (icon) icon.className = 'bi bi-chevron-right';
+    }
   }
 </script>
 

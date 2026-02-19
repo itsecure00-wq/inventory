@@ -65,7 +65,16 @@
     .loading { text-align: center; padding: 60px 20px; color: #999; }
     .loading .spinner-border { color: var(--brand); width: 40px; height: 40px; }
     
-    .logout-btn { background: none; border: none; color: rgba(255,255,255,0.8); font-size: 13px; }
+    .nav-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px; color: white; font-size: 13px; font-weight: 500;
+      padding: 8px 12px; min-height: 44px; min-width: 44px;
+      justify-content: center; text-decoration: none; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn:active { background: rgba(255,255,255,0.3); }
+    .nav-btn i { font-size: 16px; }
   </style>
 </head>
 <body>
@@ -77,8 +86,10 @@
       <h6>🍲 张重辉火锅 · 百万镇</h6>
       <small id="staffInfo">加载中...</small>
     </div>
-    <span id="dashLink"></span>
-    <button class="logout-btn" onclick="logout()"><i class="bi bi-box-arrow-right"></i> 登出</button>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span id="dashLink"></span>
+      <button class="nav-btn" onclick="logout()"><i class="bi bi-box-arrow-right"></i> 登出</button>
+    </div>
   </div>
 </div>
 
@@ -126,7 +137,14 @@
   // ============ 初始化 ============
   window.onload = function() {
     var saved = localStorage.getItem('ims_user');
-    if (!saved) { goLogin(); return; }
+    if (!saved) {
+      document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999">' +
+        '<div style="font-size:36px;margin-bottom:12px">🔒</div>' +
+        '<div style="font-size:15px">未检测到登录信息，正在跳转登录...</div>' +
+        '<div style="font-size:12px;color:#ccc;margin-top:8px">如反复出现，请确认使用正确的网址</div></div>';
+      setTimeout(function() { goLogin(); }, 1500);
+      return;
+    }
     
     try {
       currentUser = JSON.parse(saved);
@@ -135,7 +153,7 @@
       // Show dashboard link for Manager/Boss
       if (currentUser.role === 'Manager' || currentUser.role === 'Boss') {
         document.getElementById('dashLink').innerHTML =
-          '<a href="' + window.location.href.split('?')[0] + '?page=dashboard" class="logout-btn" style="text-decoration:none;margin-right:8px"><i class="bi bi-graph-up"></i> 看板</a>';
+          '<a href="' + window.location.href.split('?')[0] + '?page=dashboard" class="nav-btn"><i class="bi bi-graph-up"></i> 看板</a>';
       }
       loadCheckItems();
     } catch(e) { goLogin(); }
