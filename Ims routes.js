@@ -15,37 +15,87 @@
  * ?page=dashboard → 店长看板
  */
 function doGet(e) {
-  try {
-    var page = (e && e.parameter && e.parameter.page) ? e.parameter.page : 'login';
+  var params = (e && e.parameter) ? e.parameter : {};
 
-    var template;
+  // ========== JSONP API 调用 (从iframe sandbox绕过CORS) ==========
+  if (params.callback && params.payload) {
+    try {
+      var data = JSON.parse(params.payload);
+      var result;
+
+      switch (data.action) {
+        case 'verifyStaff':
+          result = verifyStaff(data.username, data.password);
+          break;
+        case 'submitCheck':
+          result = submitCheckRecord(data.staffName, data.items);
+          break;
+        case 'getTodayCheckItems':
+          result = getTodayCheckItems(data.staffName);
+          break;
+        case 'getCheckProgress':
+          result = getCheckProgress(data.date);
+          break;
+        case 'getLowStockItems':
+          result = getLowStockItems();
+          break;
+        case 'getItemsByCategory':
+          result = getItemsByCategory(data.category);
+          break;
+        case 'getPurchaseOrderText':
+          result = { success: true, text: getPurchaseOrderText() };
+          break;
+        case 'updatePOStatus':
+          result = updatePOStatus(data.poId, data.status);
+          break;
+        case 'getStockDashboard':
+          result = getStockDashboard();
+          break;
+        case 'getHighStockItems':
+          result = getHighStockItems();
+          break;
+        case 'generatePurchaseOrder':
+          result = generatePurchaseOrder();
+          break;
+        default:
+          result = { success: false, error: 'Unknown action: ' + data.action };
+      }
+
+      var js = params.callback + '(' + JSON.stringify(result) + ')';
+      return ContentService.createTextOutput(js).setMimeType(ContentService.MimeType.JAVASCRIPT);
+
+    } catch (err) {
+      var errJs = params.callback + '(' + JSON.stringify({ success: false, error: err.message }) + ')';
+      return ContentService.createTextOutput(errJs).setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+  }
+
+  // ========== 页面路由 ==========
+  var page = params.page || 'login';
+
+  try {
+    var fileName;
     switch (page) {
-      case 'check':
-        template = HtmlService.createTemplateFromFile('CheckPage');
-        break;
-      case 'dashboard':
-        template = HtmlService.createTemplateFromFile('StockDashboard');
-        break;
-      case 'login':
-      default:
-        template = HtmlService.createTemplateFromFile('Login');
-        break;
+      case 'check': fileName = 'CheckPage'; break;
+      case 'dashboard': fileName = 'StockDashboard'; break;
+      default: fileName = 'Login'; break;
     }
 
-    return template.evaluate()
+    // 直接用 createHtmlOutputFromFile，保留 google.script.run 桥接
+    return HtmlService.createHtmlOutputFromFile(fileName)
       .setTitle('张重辉火锅 · 库存管理')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1');
+
   } catch (err) {
-    Logger.log('doGet error: ' + err.message + ' | page=' + (e && e.parameter ? e.parameter.page : 'none'));
     return HtmlService.createHtmlOutput(
       '<div style="padding:40px;text-align:center;font-family:sans-serif">' +
-      '<h3 style="color:#d32f2f">⚠️ 系统加载错误</h3>' +
-      '<p style="color:#666">' + err.message + '</p>' +
-      '<p style="color:#999;font-size:13px">Page: ' + (e && e.parameter ? e.parameter.page : 'none') + '</p>' +
-      '<a href="' + ScriptApp.getService().getUrl() + '?page=login" style="color:#d32f2f">返回登录</a>' +
+      '<h3 style="color:#d32f2f">系统加载错误</h3>' +
+      '<p>' + err.message + '</p>' +
+      '<a href="' + ScriptApp.getService().getUrl() + '?page=login">返回登录</a>' +
       '</div>'
-    ).setTitle('张重辉火锅 · 错误');
+    ).setTitle('张重辉火锅 · 错误')
+     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 }
 
@@ -55,16 +105,49 @@ function doGet(e) {
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
-    
-    if (data.action === 'submitCheck') {
-      var result = submitCheckRecord(data.staffName, data.items);
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+    var result;
+
+    switch (data.action) {
+      case 'verifyStaff':
+        result = verifyStaff(data.username, data.password);
+        break;
+      case 'submitCheck':
+        result = submitCheckRecord(data.staffName, data.items);
+        break;
+      case 'getTodayCheckItems':
+        result = getTodayCheckItems(data.staffName);
+        break;
+      case 'getCheckProgress':
+        result = getCheckProgress(data.date);
+        break;
+      case 'getLowStockItems':
+        result = getLowStockItems();
+        break;
+      case 'getItemsByCategory':
+        result = getItemsByCategory(data.category);
+        break;
+      case 'getPurchaseOrderText':
+        result = { success: true, text: getPurchaseOrderText() };
+        break;
+      case 'updatePOStatus':
+        result = updatePOStatus(data.poId, data.status);
+        break;
+      case 'getStockDashboard':
+        result = getStockDashboard();
+        break;
+      case 'getHighStockItems':
+        result = getHighStockItems();
+        break;
+      case 'generatePurchaseOrder':
+        result = generatePurchaseOrder();
+        break;
+      default:
+        result = { success: false, error: 'Unknown action: ' + data.action };
     }
-    
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'Unknown action' }))
+
+    return ContentService.createTextOutput(JSON.stringify(result))
       .setMimeType(ContentService.MimeType.JSON);
-      
+
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);

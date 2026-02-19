@@ -2,39 +2,25 @@
 <html>
 <head>
   <base target="_top">
+  <meta charset="UTF-8">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <style>
     :root { --brand: #d32f2f; --green: #2e7d32; --orange: #f57c00; --blue: #1565c0; }
     body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding-bottom: 90px; }
 
-    .top-bar {
-      background: var(--brand); color: white; padding: 16px 20px;
-      position: sticky; top: 0; z-index: 100;
-    }
+    .top-bar { background: var(--brand); color: white; padding: 16px 20px; position: sticky; top: 0; z-index: 100; }
     .top-bar h6 { margin: 0; font-weight: 700; }
 
     .stat-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 16px; }
-    .stat-card {
-      background: white; border-radius: 12px; padding: 14px; text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
+    .stat-card { background: white; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .stat-num { font-size: 28px; font-weight: 700; line-height: 1.2; }
     .stat-label { font-size: 11px; color: #888; }
 
-    .section-title {
-      padding: 8px 20px; font-size: 14px; font-weight: 600; color: #666;
-      background: #f0f0f0; border-bottom: 1px solid #e0e0e0;
-    }
+    .section-title { padding: 8px 20px; font-size: 14px; font-weight: 600; color: #666; background: #f0f0f0; border-bottom: 1px solid #e0e0e0; }
 
-    .low-item {
-      background: white; padding: 14px 20px; border-bottom: 1px solid #f0f0f0;
-      display: flex; align-items: center; gap: 12px;
-    }
-    .low-urgency {
-      width: 6px; min-height: 40px; border-radius: 3px;
-      flex-shrink: 0;
-    }
+    .low-item { background: white; padding: 14px 20px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 12px; }
+    .low-urgency { width: 6px; min-height: 40px; border-radius: 3px; flex-shrink: 0; }
     .urgency-critical { background: var(--brand); }
     .urgency-warning { background: var(--orange); }
     .low-info { flex: 1; }
@@ -45,48 +31,27 @@
     .low-cost { font-size: 11px; color: #888; }
     .low-supplier { font-size: 11px; color: var(--blue); }
 
-    .high-item {
-      background: white; padding: 12px 20px; border-bottom: 1px solid #f0f0f0;
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    .high-item { background: white; padding: 12px 20px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
 
-    .check-progress {
-      background: white; padding: 16px 20px; margin: 10px 16px; border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
+    .check-progress { background: white; padding: 16px 20px; margin: 10px 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .progress { height: 8px; border-radius: 4px; }
 
-    .summary-box {
-      background: white; margin: 10px 16px; padding: 16px; border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
+    .summary-box { background: white; margin: 10px 16px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 
-    .cat-stats {
-      background: white; margin: 10px 16px; padding: 16px; border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    .cat-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px;
-    }
+    .cat-stats { background: white; margin: 10px 16px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .cat-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
     .cat-row:last-child { border-bottom: none; }
     .cat-row .cat-name { font-weight: 500; }
     .cat-row .cat-low { color: var(--brand); font-weight: 600; font-size: 12px; }
 
-    .bottom-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; background: white;
-      padding: 12px 16px; box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
-      z-index: 100; display: flex; gap: 10px;
-    }
-    .btn-po {
-      flex: 1; border: none; border-radius: 12px; padding: 12px; font-size: 14px;
-      font-weight: 600; color: white;
-    }
+    .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 16px; box-shadow: 0 -4px 12px rgba(0,0,0,0.08); z-index: 100; display: flex; gap: 10px; }
+    .btn-po { flex: 1; border: none; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 600; color: white; }
     .btn-po.primary { background: var(--brand); }
     .btn-po.whatsapp { background: #25d366; }
 
     .loading { text-align: center; padding: 60px 20px; color: #999; }
     .loading .spinner-border { color: var(--brand); width: 40px; height: 40px; }
+
     .nav-btn {
       display: inline-flex; align-items: center; gap: 4px;
       background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
@@ -103,13 +68,8 @@
       background: #f8f8f8; padding: 10px 20px; font-size: 13px; font-weight: 600;
       color: #666; border-bottom: 1px solid #eee; cursor: pointer;
       display: flex; justify-content: space-between; align-items: center;
-      -webkit-tap-highlight-color: transparent;
     }
-    .all-stock-cat:active { background: #f0f0f0; }
-    .all-stock-item {
-      background: white; padding: 10px 20px; border-bottom: 1px solid #f5f5f5;
-      display: flex; align-items: center; gap: 8px; font-size: 13px;
-    }
+    .all-stock-item { background: white; padding: 10px 20px; border-bottom: 1px solid #f5f5f5; display: flex; align-items: center; gap: 8px; font-size: 13px; }
     .stock-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .stock-dot.low { background: var(--brand); }
     .stock-dot.high { background: var(--orange); }
@@ -120,44 +80,35 @@
     .all-stock-qty .qty-range { font-size: 11px; color: #aaa; }
 
     @media (max-width: 360px) {
-      .stat-cards { grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 10px; }
+      .stat-cards { gap: 6px; padding: 10px; }
       .stat-num { font-size: 22px; }
-      .stat-label { font-size: 10px; }
-      .low-item { padding: 10px 14px; gap: 8px; }
-      .low-name { font-size: 13px; }
       .btn-po { font-size: 12px; padding: 10px; }
-      .nav-btn { padding: 6px 8px; font-size: 12px; gap: 2px; }
-      .nav-btn i { font-size: 14px; }
+      .nav-btn { padding: 6px 8px; font-size: 12px; }
     }
   </style>
 </head>
 <body>
 
-<!-- Top Bar -->
 <div class="top-bar">
   <div class="d-flex justify-content-between align-items-center">
     <div>
-      <h6>🍲 张重辉火锅 · 百万镇 补货看板</h6>
+      <h6>🍲 张重辉火锅 · 百万镇 货品看板</h6>
       <small id="dateInfo"></small>
     </div>
     <div style="display:flex;gap:6px;align-items:center">
-      <a class="nav-btn" id="checkLink" title="盘点"><i class="bi bi-clipboard-check"></i> 盘点</a>
-      <button class="nav-btn" onclick="loadAll()" title="刷新"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
-      <button class="nav-btn" onclick="logout()" title="登出"><i class="bi bi-box-arrow-right"></i> 登出</button>
+      <button class="nav-btn" onclick="goCheck()"><i class="bi bi-clipboard-check"></i> 盘点</button>
+      <button class="nav-btn" onclick="loadAll()"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+      <button class="nav-btn" onclick="logout()"><i class="bi bi-box-arrow-right"></i> 登出</button>
     </div>
   </div>
 </div>
 
-<!-- Loading -->
 <div class="loading" id="loadingDiv">
   <div class="spinner-border mb-3"></div>
   <div>加载看板数据...</div>
 </div>
 
-<!-- Content -->
 <div id="contentDiv" style="display:none">
-
-  <!-- Stat Cards -->
   <div class="stat-cards">
     <div class="stat-card">
       <div class="stat-num" style="color:var(--brand)" id="lowNum">0</div>
@@ -173,7 +124,6 @@
     </div>
   </div>
 
-  <!-- Check Progress -->
   <div class="check-progress">
     <div class="d-flex justify-content-between mb-1">
       <span style="font-size:13px;font-weight:600">📋 今日盘点</span>
@@ -185,8 +135,7 @@
     <div style="font-size:11px;color:#999;margin-top:4px" id="checkStaff"></div>
   </div>
 
-  <!-- Value Summary -->
-  <div class="summary-box" id="valueBox">
+  <div class="summary-box">
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <div style="font-size:13px;color:#888">📦 库存总值</div>
@@ -199,23 +148,18 @@
     </div>
   </div>
 
-  <!-- Low Stock List -->
   <div class="section-title" id="lowTitle">🔴 需补货 (0项)</div>
   <div id="lowList"></div>
 
-  <!-- High Stock List -->
   <div class="section-title" id="highTitle" style="display:none">🟡 库存偏高 (0项)</div>
   <div id="highList"></div>
 
-  <!-- Category Stats -->
   <div class="section-title" id="catTitle" style="display:none">📊 分类统计</div>
   <div class="cat-stats" id="catStats" style="display:none"></div>
 
-  <!-- All Stock Items -->
   <div class="section-title" id="allStockTitle" style="display:none">📦 全部库存</div>
   <div id="allStockList"></div>
 
-  <!-- Purchase Summary -->
   <div class="summary-box" id="summaryBox" style="display:none">
     <div class="d-flex justify-content-between align-items-center">
       <div>
@@ -230,7 +174,6 @@
   </div>
 </div>
 
-<!-- Bottom Bar -->
 <div class="bottom-bar" id="bottomBar" style="display:none">
   <button class="btn-po primary" onclick="generatePO()">
     <i class="bi bi-clipboard-check"></i> 生成采购单
@@ -241,40 +184,47 @@
 </div>
 
 <script>
+  // Safe localStorage wrapper (GAS sandbox blocks cross-origin access)
+  function lsGet(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+  function lsSet(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
+  function lsDel(key) { try { localStorage.removeItem(key); } catch(e) {} }
+
   var dashboardData = null;
   var lowItems = [];
   var highItems = [];
   var allStockItems = [];
+  var CATEGORY_ICONS = {
+    '肉类': '🥩', '菜类': '🥬', '海鲜': '🦐', '丸子': '🍜',
+    '锅底': '🫕', '调味料': '🧂', '酒水': '🍺', '消耗品': '🧻',
+    '甜品': '🍰', '饮品类': '🧃'
+  };
 
   window.onload = function() {
-    var saved = localStorage.getItem('ims_user');
+    var saved = lsGet('ims_user');
     if (!saved) {
       document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999">' +
         '<div style="font-size:36px;margin-bottom:12px">🔒</div>' +
-        '<div style="font-size:15px">未检测到登录信息，正在跳转登录...</div>' +
-        '<div style="font-size:12px;color:#ccc;margin-top:8px">如反复出现，请确认使用正确的网址</div></div>';
+        '<div style="font-size:15px">未检测到登录信息，正在跳转登录...</div></div>';
       setTimeout(function() { goLogin(); }, 1500);
       return;
     }
     try {
       var user = JSON.parse(saved);
-      if (user.role === 'Staff') {
-        window.location.href = window.location.href.split('?')[0] + '?page=check';
-        return;
-      }
+      if (user.role === 'Staff') { goCheck(); return; }
     } catch(e) { goLogin(); return; }
 
     document.getElementById('dateInfo').textContent = new Date().toLocaleDateString('zh-CN', {
       year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
     });
-    document.getElementById('checkLink').href = window.location.href.split('?')[0] + '?page=check';
-
     loadAll();
   };
 
   function goLogin() {
-    localStorage.removeItem('ims_user');
-    window.location.href = window.location.href.split('?')[0] + '?page=login';
+    lsDel('ims_user');
+    window.top.location.href = window.top.location.href.split('?')[0] + '?page=login';
+  }
+  function goCheck() {
+    window.top.location.href = window.top.location.href.split('?')[0] + '?page=check';
   }
   function logout() { goLogin(); }
 
@@ -286,109 +236,83 @@
       '<button class="btn btn-sm btn-outline-danger mt-3" onclick="loadAll()">重试</button>';
   }
 
-  // ============ 并行加载 3 个 API ============
   function loadAll() {
     document.getElementById('loadingDiv').style.display = 'block';
     document.getElementById('loadingDiv').innerHTML =
       '<div class="spinner-border mb-3"></div><div>加载看板数据...</div>';
     document.getElementById('contentDiv').style.display = 'none';
 
-    var loaded = { dashboard: false, low: false, high: false, all: false };
-    var errors = [];
-
-    function tryRender() {
-      if (!loaded.dashboard || !loaded.low || !loaded.high || !loaded.all) return;
-      if (errors.length > 0 && !dashboardData) {
-        showLoadError(errors.join('; '));
-      } else {
-        renderDashboard();
-      }
-    }
-
-    google.script.run.withSuccessHandler(function(result) {
-      dashboardData = result;
-      loaded.dashboard = true;
-      tryRender();
-    }).withFailureHandler(function(err) {
-      errors.push('看板: ' + err.message);
-      loaded.dashboard = true;
-      tryRender();
-    }).getStockDashboard();
-
-    google.script.run.withSuccessHandler(function(result) {
-      lowItems = result.success ? result.items : [];
-      loaded.low = true;
-      tryRender();
-    }).withFailureHandler(function(err) {
-      lowItems = [];
-      loaded.low = true;
-      tryRender();
-    }).getLowStockItems();
-
-    google.script.run.withSuccessHandler(function(result) {
-      highItems = result.success ? result.items : [];
-      loaded.high = true;
-      tryRender();
-    }).withFailureHandler(function(err) {
-      highItems = [];
-      loaded.high = true;
-      tryRender();
-    }).getHighStockItems();
-
-    google.script.run.withSuccessHandler(function(result) {
-      allStockItems = result.success ? result.items : [];
-      loaded.all = true;
-      tryRender();
-    }).withFailureHandler(function(err) {
-      allStockItems = [];
-      loaded.all = true;
-      tryRender();
-    }).getItemsByCategory('');
+    // Sequential: getStockDashboard -> getLowStockItems -> getHighStockItems -> getItemsByCategory
+    google.script.run
+      .withSuccessHandler(function(r1) {
+        dashboardData = r1;
+        google.script.run
+          .withSuccessHandler(function(r2) {
+            lowItems = r2.success ? r2.items : [];
+            google.script.run
+              .withSuccessHandler(function(r3) {
+                highItems = r3.success ? r3.items : [];
+                google.script.run
+                  .withSuccessHandler(function(r4) {
+                    allStockItems = r4.success ? r4.items : [];
+                    renderDashboard();
+                  })
+                  .withFailureHandler(function() { allStockItems = []; renderDashboard(); })
+                  .getItemsByCategory('');
+              })
+              .withFailureHandler(function() {
+                highItems = [];
+                google.script.run
+                  .withSuccessHandler(function(r4) { allStockItems = r4.success ? r4.items : []; renderDashboard(); })
+                  .withFailureHandler(function() { allStockItems = []; renderDashboard(); })
+                  .getItemsByCategory('');
+              })
+              .getHighStockItems();
+          })
+          .withFailureHandler(function(err) {
+            lowItems = [];
+            showLoadError('获取低库存失败: ' + (err.message || err));
+          })
+          .getLowStockItems();
+      })
+      .withFailureHandler(function(err) {
+        showLoadError('获取看板失败: ' + (err.message || err));
+      })
+      .getStockDashboard();
   }
 
   function renderDashboard() {
     document.getElementById('loadingDiv').style.display = 'none';
     document.getElementById('contentDiv').style.display = 'block';
 
-    if (!dashboardData || !dashboardData.success) return;
+    if (!dashboardData || !dashboardData.success) {
+      showLoadError('看板数据无效');
+      return;
+    }
     var d = dashboardData;
 
-    // Stats
     document.getElementById('lowNum').textContent = d.lowCount;
     document.getElementById('highNum').textContent = d.highCount;
     document.getElementById('normalNum').textContent = d.normalCount;
 
-    // Check progress
     document.getElementById('checkText').textContent = d.todayChecked + '/' + d.todayTotal;
     document.getElementById('checkBar').style.width = d.checkProgress + '%';
     document.getElementById('checkBar').style.background = d.checkProgress >= 100 ? 'var(--green)' : 'var(--brand)';
-    if (d.checkProgress >= 100) {
-      document.getElementById('checkStaff').textContent = '✅ 今日盘点已完成';
-    } else if (d.todayTotal === 0) {
-      document.getElementById('checkStaff').textContent = '今日无需盘点';
-    } else {
-      document.getElementById('checkStaff').textContent = '待盘点 ' + (d.todayTotal - d.todayChecked) + ' 项';
-    }
+    document.getElementById('checkStaff').textContent =
+      d.checkProgress >= 100 ? '✅ 今日盘点已完成' :
+      d.todayTotal === 0 ? '今日无需盘点' :
+      '待盘点 ' + (d.todayTotal - d.todayChecked) + ' 项';
 
-    // Value summary
-    document.getElementById('totalValue').textContent = 'RM ' + d.totalValue.toFixed(2);
+    document.getElementById('totalValue').textContent = 'RM ' + (d.totalValue || 0).toFixed(2);
     document.getElementById('totalItems').textContent = d.total;
 
-    // Category stats
     if (d.categoryStats) {
+      var cats = Object.keys(d.categoryStats).sort(function(a, b) { return d.categoryStats[b].low - d.categoryStats[a].low; });
       var catHtml = '';
-      var cats = Object.keys(d.categoryStats).sort(function(a, b) {
-        return d.categoryStats[b].low - d.categoryStats[a].low; // 低库存多的排前面
-      });
       for (var c = 0; c < cats.length; c++) {
         var cs = d.categoryStats[cats[c]];
-        catHtml += '<div class="cat-row">';
-        catHtml += '<span class="cat-name">' + cats[c] + ' <span style="color:#bbb;font-size:11px">(' + cs.total + '项)</span></span>';
-        if (cs.low > 0) {
-          catHtml += '<span class="cat-low">🔴 缺 ' + cs.low + ' 项</span>';
-        } else {
-          catHtml += '<span style="color:var(--green);font-size:12px">✅ 充足</span>';
-        }
+        catHtml += '<div class="cat-row"><span class="cat-name">' + cats[c] + ' <span style="color:#bbb;font-size:11px">(' + cs.total + '项)</span></span>';
+        catHtml += cs.low > 0 ? '<span class="cat-low">🔴 缺 ' + cs.low + ' 项</span>' : '<span style="color:var(--green);font-size:12px">✅ 充足</span>';
         catHtml += '</div>';
       }
       document.getElementById('catStats').innerHTML = catHtml;
@@ -396,7 +320,6 @@
       document.getElementById('catTitle').style.display = 'block';
     }
 
-    // Low stock list
     document.getElementById('lowTitle').textContent = '🔴 需补货 (' + lowItems.length + '项)';
     var lowHtml = '';
     if (lowItems.length === 0) {
@@ -405,36 +328,24 @@
       var totalCost = 0;
       for (var i = 0; i < lowItems.length; i++) {
         var item = lowItems[i];
-        totalCost += item.totalCost;
-        var urgencyClass = item.urgency < 30 ? 'urgency-critical' : 'urgency-warning';
-
+        totalCost += item.totalCost || 0;
+        var urg = (item.urgency || 100) < 30 ? 'urgency-critical' : 'urgency-warning';
         lowHtml += '<div class="low-item">';
-        lowHtml += '<div class="low-urgency ' + urgencyClass + '"></div>';
-        lowHtml += '<div class="low-info">';
-        lowHtml += '<div class="low-name">' + item.name + '</div>';
+        lowHtml += '<div class="low-urgency ' + urg + '"></div>';
+        lowHtml += '<div class="low-info"><div class="low-name">' + item.name + '</div>';
         lowHtml += '<div class="low-detail">当前 ' + item.currentQty + item.unit + ' / 最低 ' + item.minStock + item.unit + '</div>';
         if (item.supplier) lowHtml += '<div class="low-supplier">📦 ' + item.supplier + '</div>';
-        lowHtml += '</div>';
-        lowHtml += '<div class="low-action">';
-        lowHtml += '<div class="low-need">+' + item.need + item.unit + '</div>';
-        if (item.price > 0) {
-          lowHtml += '<div class="low-cost">≈ RM ' + item.totalCost.toFixed(2) + '</div>';
-        } else {
-          lowHtml += '<div class="low-cost" style="color:var(--orange)">未设价</div>';
-        }
-        lowHtml += '</div>';
-        lowHtml += '</div>';
+        lowHtml += '</div><div class="low-action"><div class="low-need">+' + item.need + item.unit + '</div>';
+        lowHtml += item.price > 0 ? '<div class="low-cost">≈ RM ' + (item.totalCost || 0).toFixed(2) + '</div>' : '<div class="low-cost" style="color:var(--orange)">未设价</div>';
+        lowHtml += '</div></div>';
       }
-
-      // Summary
       document.getElementById('summaryBox').style.display = 'block';
       document.getElementById('totalCost').textContent = 'RM ' + totalCost.toFixed(2);
-      document.getElementById('pendingPO').textContent = d.pendingPO;
+      document.getElementById('pendingPO').textContent = d.pendingPO || 0;
       document.getElementById('bottomBar').style.display = 'flex';
     }
     document.getElementById('lowList').innerHTML = lowHtml;
 
-    // High stock list
     if (highItems.length > 0) {
       document.getElementById('highTitle').style.display = 'block';
       document.getElementById('highTitle').textContent = '🟡 库存偏高 (' + highItems.length + '项)';
@@ -449,14 +360,11 @@
       document.getElementById('highList').innerHTML = highHtml;
     }
 
-    // ====== All stock items grouped by category ======
     if (allStockItems.length > 0) {
       document.getElementById('allStockTitle').style.display = 'block';
       document.getElementById('allStockTitle').textContent = '📦 全部库存 (' + allStockItems.length + '项)';
 
       var catGroups = {}, catOrder = [];
-      var catIcons = { '肉类':'🥩','菜类':'🥬','海鲜':'🦐','丸子':'🍜','锅底':'🫕','调味料':'🧂','酒水':'🍺','消耗品':'🧻','甜品':'🍰','饮品类':'🥤' };
-
       for (var a = 0; a < allStockItems.length; a++) {
         var ai = allStockItems[a];
         var cat = ai.category || '未分类';
@@ -468,37 +376,30 @@
       for (var ci = 0; ci < catOrder.length; ci++) {
         var cn = catOrder[ci];
         var cItems = catGroups[cn];
-        var cIcon = catIcons[cn] || '📦';
+        var cIcon = CATEGORY_ICONS[cn] || '📦';
         var cId = 'allCat_' + ci;
         var cLow = 0, cHigh = 0;
         for (var si = 0; si < cItems.length; si++) {
           if (cItems[si].currentQty < cItems[si].minStock && cItems[si].minStock > 0) cLow++;
           else if (cItems[si].currentQty > cItems[si].maxStock && cItems[si].maxStock > 0) cHigh++;
         }
-        var cStatus = '';
-        if (cLow > 0) cStatus += '<span style="color:var(--brand)">🔴' + cLow + '</span> ';
-        if (cHigh > 0) cStatus += '<span style="color:var(--orange)">🟡' + cHigh + '</span> ';
-        cStatus += '<span style="color:var(--green)">🟢' + (cItems.length - cLow - cHigh) + '</span>';
+        var cStatus = (cLow > 0 ? '<span style="color:var(--brand)">🔴' + cLow + '</span> ' : '') +
+                      (cHigh > 0 ? '<span style="color:var(--orange)">🟡' + cHigh + '</span> ' : '') +
+                      '<span style="color:var(--green)">🟢' + (cItems.length - cLow - cHigh) + '</span>';
 
         allHtml += '<div class="all-stock-cat" onclick="toggleCatAll(\'' + cId + '\',this)">';
         allHtml += '<span>' + cIcon + ' ' + cn + ' (' + cItems.length + ')</span>';
-        allHtml += '<span>' + cStatus + ' <i class="bi bi-chevron-right"></i></span>';
-        allHtml += '</div>';
+        allHtml += '<span>' + cStatus + ' <i class="bi bi-chevron-right"></i></span></div>';
         allHtml += '<div id="' + cId + '" style="display:none">';
 
         for (var ii = 0; ii < cItems.length; ii++) {
           var si2 = cItems[ii];
-          var dotClass = 'ok';
-          if (si2.currentQty < si2.minStock && si2.minStock > 0) dotClass = 'low';
-          else if (si2.currentQty > si2.maxStock && si2.maxStock > 0) dotClass = 'high';
-
-          allHtml += '<div class="all-stock-item">';
-          allHtml += '<div class="stock-dot ' + dotClass + '"></div>';
+          var dotClass = (si2.currentQty < si2.minStock && si2.minStock > 0) ? 'low' :
+                         (si2.currentQty > si2.maxStock && si2.maxStock > 0) ? 'high' : 'ok';
+          allHtml += '<div class="all-stock-item"><div class="stock-dot ' + dotClass + '"></div>';
           allHtml += '<div class="all-stock-name">' + si2.name + '</div>';
-          allHtml += '<div class="all-stock-qty">';
-          allHtml += '<div class="qty-num">' + si2.currentQty + ' ' + si2.unit + '</div>';
-          allHtml += '<div class="qty-range">' + si2.minStock + '~' + si2.maxStock + '</div>';
-          allHtml += '</div></div>';
+          allHtml += '<div class="all-stock-qty"><div class="qty-num">' + si2.currentQty + ' ' + si2.unit + '</div>';
+          allHtml += '<div class="qty-range">' + si2.minStock + '~' + si2.maxStock + '</div></div></div>';
         }
         allHtml += '</div>';
       }
@@ -506,33 +407,34 @@
     }
   }
 
-  // ============ Actions ============
   function generatePO() {
     if (!confirm('确认生成采购单？将包含 ' + lowItems.length + ' 项低库存物品')) return;
-
-    google.script.run.withSuccessHandler(function(result) {
-      if (result.success) {
-        if (result.itemCount > 0) {
-          alert('✅ 采购单已生成\n\n单号: ' + result.poId + '\n物品: ' + result.itemCount + '项\n总额: RM ' + result.totalCost);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result.success) {
+          alert(result.itemCount > 0 ?
+            '✅ 采购单已生成\n\n单号: ' + result.poId + '\n物品: ' + result.itemCount + '项\n总额: RM ' + result.totalCost :
+            '✅ 当前无需补货');
+          loadAll();
         } else {
-          alert('✅ 当前无需补货');
+          alert('❌ 生成失败: ' + result.error);
         }
-        loadAll();
-      } else {
-        alert('❌ 生成失败: ' + result.error);
-      }
-    }).withFailureHandler(function(err) {
-      alert('❌ 错误: ' + err.message);
-    }).generatePurchaseOrder();
+      })
+      .withFailureHandler(function(err) { alert('❌ 错误: ' + (err.message || err)); })
+      .generatePurchaseOrder();
   }
 
   function sendWhatsApp() {
-    google.script.run.withSuccessHandler(function(text) {
-      var encoded = encodeURIComponent(text);
-      window.open('https://wa.me/?text=' + encoded, '_blank');
-    }).withFailureHandler(function(err) {
-      alert('获取采购单失败: ' + err.message);
-    }).getPurchaseOrderText();
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result.success) {
+          window.open('https://wa.me/?text=' + encodeURIComponent(result.text), '_blank');
+        } else {
+          alert('获取采购单失败: ' + (result.error || ''));
+        }
+      })
+      .withFailureHandler(function(err) { alert('获取采购单失败: ' + (err.message || err)); })
+      .getPurchaseOrderText();
   }
 
   function toggleCatAll(catId, header) {
