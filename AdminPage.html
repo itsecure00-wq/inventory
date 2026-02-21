@@ -221,6 +221,13 @@
       font-size: 14px; font-weight: 500; cursor: pointer;
       margin-top: 6px;
     }
+    .delete-item-btn {
+      width: 100%; padding: 12px; margin-top: 6px;
+      background: none; border: 1px solid #ef5350;
+      color: #ef5350; border-radius: 10px;
+      font-size: 15px; cursor: pointer;
+    }
+    .delete-item-btn:active { background: #ffebee; }
 
     /* 编辑物品照片区 */
     .edit-photo-area {
@@ -640,7 +647,8 @@ function openEditItem(item) {
       '</select>' +
     '</div>' +
     '<button class="save-btn" id="editSaveBtn" onclick="saveItem()">💾 保存</button>' +
-    '<button class="cancel-btn" onclick="closeEditModal()">取消</button>';
+    '<button class="cancel-btn" onclick="closeEditModal()">取消</button>' +
+    '<button class="delete-item-btn" id="editDeleteBtn" onclick="confirmDeleteItem()">🗑️ 删除物品</button>';
 
   document.getElementById('editOverlay').classList.add('show');
 }
@@ -747,6 +755,30 @@ function closeEditModal() {
 }
 function closeModal(evt) {
   if (evt && evt.target === document.getElementById('editOverlay')) closeEditModal();
+}
+
+function confirmDeleteItem() {
+  if (!editingItem) return;
+  if (!confirm('确认删除「' + editingItem.name + '」？\n此操作不可撤销，物品将从数据库中永久删除。')) return;
+  var btn = document.getElementById('editDeleteBtn');
+  var itemName = editingItem.name;
+  btn.disabled = true; btn.textContent = '⏳ 删除中...';
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      closeEditModal();
+      if (resp && resp.success) {
+        showToast('✅ 已删除 ' + itemName);
+        loaded.items = false;
+        loadItems();
+      } else {
+        showToast('❌ ' + (resp ? resp.error : '删除失败'));
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false; btn.textContent = '🗑️ 删除物品';
+      showToast('❌ ' + (err.message || err));
+    })
+    .deleteItem(currentUser.username, editingItem.id);
 }
 
 // ══════════════════════════════════════════════

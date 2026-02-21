@@ -768,6 +768,31 @@ function updateItem(username, itemId, fields) {
 }
 
 // ============================================================
+// 9-B. deleteItem(username, itemId) — Manager/Boss
+// ============================================================
+function deleteItem(username, itemId) {
+  try {
+    if (!checkRole_(username, ['Manager', 'Boss'])) {
+      return { success: false, error: '权限不足，需要 Manager 或 Boss 角色' };
+    }
+    var sheet = getSheet_(IMS_CONFIG.SHEETS.ITEMS);
+    var data  = sheet.getDataRange().getValues();
+    var C     = IMS_CONFIG.COL;
+
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][C.ID]) === String(itemId)) {
+        sheet.deleteRow(i + 1);
+        return { success: true, itemId: itemId };
+      }
+    }
+    return { success: false, error: '物品不存在: ' + itemId };
+  } catch (e) {
+    Logger.log('deleteItem error: ' + e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+// ============================================================
 // 10. getItemsForAdmin(username) — 需要 Manager/Boss
 // ============================================================
 /**
