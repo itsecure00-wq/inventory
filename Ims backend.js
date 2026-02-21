@@ -793,6 +793,46 @@ function deleteItem(username, itemId) {
 }
 
 // ============================================================
+// 9-C. adjustStock(username, itemId, delta, reason) — Manager/Boss
+// ============================================================
+function adjustStock(username, itemId, delta, reason) {
+  try {
+    if (!checkRole_(username, ['Manager', 'Boss'])) {
+      return { success: false, error: '权限不足，需要 Manager 或 Boss 角色' };
+    }
+    var d = Number(delta);
+    if (isNaN(d) || d === 0) return { success: false, error: '调整数量不能为零' };
+
+    var sheet = getSheet_(IMS_CONFIG.SHEETS.ITEMS);
+    var data  = sheet.getDataRange().getValues();
+    var C     = IMS_CONFIG.COL;
+
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][C.ID]) === String(itemId)) {
+        var oldQty = safeQty_(data[i][C.QTY]);
+        var newQty = Math.max(0, oldQty + d);
+        var now    = fmtDateTime_();
+        sheet.getRange(i + 1, C.QTY + 1).setValue(newQty);
+        sheet.getRange(i + 1, C.LAST_UPDATE + 1).setValue(now);
+        // 写入 Inventory_Log（容错，不影响主流程）
+        try {
+          var logSheet = getSheet_(IMS_CONFIG.SHEETS.LOGS);
+          if (logSheet) {
+            logSheet.appendRow([now, username, String(data[i][C.ID]), String(data[i][C.NAME]),
+                                 oldQty, newQty, d, reason || '手动调整']);
+          }
+        } catch(le) { /* ignore */ }
+        return { success: true, itemId: itemId, oldQty: oldQty, newQty: newQty };
+      }
+    }
+    return { success: false, error: '物品不存在: ' + itemId };
+  } catch (e) {
+    Logger.log('adjustStock error: ' + e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+// ============================================================
 // 10. getItemsForAdmin(username) — 需要 Manager/Boss
 // ============================================================
 /**

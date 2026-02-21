@@ -107,6 +107,123 @@
     .dot-high { background: #ff9800; }
     .dot-ok   { background: #388e3c; }
 
+    /* ── 状态图例 + 工具栏 ── */
+    .legend-bar {
+      padding: 6px 14px; background: #fff;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 11px; color: #757575;
+    }
+    .inv-toolbar {
+      padding: 6px 14px 8px; background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .toolbar-chip {
+      padding: 5px 11px; border-radius: 14px; font-size: 12px;
+      border: 1.5px solid #e0e0e0; background: #fafafa;
+      color: #424242; cursor: pointer; white-space: nowrap;
+    }
+    .toolbar-chip.active { background: #37474f; color: #fff; border-color: #37474f; }
+    .export-btn {
+      margin-left: auto; padding: 5px 12px; border-radius: 14px;
+      font-size: 12px; border: 1.5px solid #37474f;
+      background: #fff; color: #37474f; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ── 历史卡片颜色 ── */
+    .hist-card { background:#fff; margin:8px 12px; border-radius:10px; padding:12px 14px;
+      box-shadow:0 1px 3px rgba(0,0,0,.07); border-left:4px solid #e0e0e0; }
+    .hist-card.hist-normal  { border-left-color: #388e3c; }
+    .hist-card.hist-warn    { border-left-color: #f57c00; }
+
+    /* ── 盘点历史筛选栏 ── */
+    .hist-filter-bar {
+      padding: 8px 14px; background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hist-filter-bar label { font-size: 12px; color: #757575; white-space: nowrap; }
+    .hist-filter-bar select {
+      padding: 5px 8px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 13px; background: #fafafa; color: #212121; outline: none;
+    }
+
+    /* ── 采购单工具栏 ── */
+    .po-toolbar {
+      padding: 10px 14px; background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .gen-po-btn {
+      width: 100%; padding: 11px; background: #37474f;
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .gen-po-btn:active { background: #263238; }
+    .gen-po-btn:disabled { background: #90a4ae; cursor: not-allowed; }
+
+    /* ── 库存调整弹窗 ── */
+    .adj-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.45); display: none;
+      align-items: flex-end; justify-content: center;
+    }
+    .adj-overlay.show { display: flex; }
+    .adj-sheet {
+      background: #fff; border-radius: 18px 18px 0 0;
+      padding: 16px 18px 32px; width: 100%; max-width: 480px;
+    }
+    .adj-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+    .adj-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .adj-label { font-size: 12px; color: #757575; margin-bottom: 4px; }
+    .adj-input {
+      width: 100%; padding: 10px 12px;
+      border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 16px; outline: none; text-align: center;
+    }
+    .adj-input:focus { border-color: #37474f; }
+    .adj-cur { font-size: 13px; color: #9e9e9e; margin-bottom: 12px; }
+    .adj-save-btn {
+      width: 100%; padding: 13px;
+      background: #37474f; color: #fff; border: none;
+      border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+    }
+    .adj-cancel-btn {
+      width: 100%; padding: 11px; margin-top: 6px;
+      background: #fff; color: #757575;
+      border: 1.5px solid #e0e0e0; border-radius: 10px;
+      font-size: 14px; cursor: pointer;
+    }
+
+    /* ── 密码显示切换 ── */
+    .pw-wrap { position: relative; }
+    .pw-wrap .form-input { padding-right: 38px; }
+    .pw-eye {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      font-size: 17px; color: #9e9e9e; line-height: 1;
+    }
+
+    /* ── 库存调整按钮 ── */
+    .adjust-item-btn {
+      width: 100%; padding: 12px; margin-top: 6px;
+      background: none; border: 1.5px solid #1976d2;
+      color: #1976d2; border-radius: 10px;
+      font-size: 15px; cursor: pointer;
+    }
+    .adjust-item-btn:active { background: #e3f2fd; }
+
+    /* ── 停用物品样式 ── */
+    .item-row.inactive { opacity: 0.52; }
+    .inactive-badge {
+      font-size: 10px; color: #9e9e9e;
+      background: #f5f5f5; border-radius: 6px;
+      padding: 1px 5px; margin-left: 4px;
+    }
+
     /* ── 员工分配 ── */
     .staff-card {
       background: #fff; margin: 8px 12px;
@@ -316,6 +433,17 @@
       <option value="">全部分类</option>
     </select>
   </div>
+  <div class="legend-bar">
+    <span class="legend-item"><span class="status-dot dot-low"></span>低库存</span>
+    <span class="legend-item"><span class="status-dot dot-high"></span>超库存</span>
+    <span class="legend-item"><span class="status-dot dot-ok"></span>正常</span>
+    <span style="flex:1"></span>
+    <span class="legend-item" style="cursor:pointer" onclick="toggleInactive()">
+      <input type="checkbox" id="showInactiveCk" style="margin-right:3px" onchange="filterItems()">
+      <label for="showInactiveCk" style="cursor:pointer;color:#9e9e9e">显示停用</label>
+    </span>
+    <button class="export-btn" onclick="exportItemsCSV()">📤 导出</button>
+  </div>
   <div id="itemListArea">
     <div class="loading-area"><div class="spinner"></div><div>加载中...</div></div>
   </div>
@@ -330,6 +458,15 @@
 
 <!-- ── Tab 2: 盘点历史 ── -->
 <div id="panel2" style="display:none">
+  <div class="hist-filter-bar">
+    <label>显示范围</label>
+    <select id="histDays" onchange="reloadHist()">
+      <option value="7">最近 7 天</option>
+      <option value="30" selected>最近 30 天</option>
+      <option value="90">最近 90 天</option>
+      <option value="180">最近 180 天</option>
+    </select>
+  </div>
   <div id="histArea">
     <div class="loading-area"><div class="spinner"></div><div>加载中...</div></div>
   </div>
@@ -337,6 +474,9 @@
 
 <!-- ── Tab 3: 采购单 ── -->
 <div id="panel3" style="display:none">
+  <div class="po-toolbar">
+    <button class="gen-po-btn" id="genPoBtn" onclick="generatePO()">🛒 生成补货采购单</button>
+  </div>
   <div id="poArea">
     <div class="loading-area"><div class="spinner"></div><div>加载中...</div></div>
   </div>
@@ -358,6 +498,20 @@
     <!-- 隐藏的照片 input（在 modal 外防止滚动层级问题） -->
     <input type="file" id="editPhotoInput" accept="image/*" capture="environment"
            style="display:none" onchange="onEditPhotoSelected(this)">
+  </div>
+</div>
+
+<!-- ── 库存手动调整弹窗 ── -->
+<div class="adj-overlay" id="adjOverlay" onclick="if(event.target===this)closeAdjModal()">
+  <div class="adj-sheet">
+    <div class="adj-title" id="adjTitle">调整库存</div>
+    <div class="adj-cur" id="adjCurLabel"></div>
+    <div class="adj-label">调整数量（正数=增加，负数=减少）</div>
+    <input class="adj-input" type="number" id="adjDelta" placeholder="例: +5 或 -3">
+    <div class="adj-label" style="margin-top:10px">原因（可选）</div>
+    <input class="adj-input" type="text" id="adjReason" placeholder="例: 盘点纠正、损耗..." style="text-align:left;font-size:14px">
+    <button class="adj-save-btn" id="adjSaveBtn" onclick="confirmAdjust()" style="margin-top:14px">✅ 确认调整</button>
+    <button class="adj-cancel-btn" onclick="closeAdjModal()">取消</button>
   </div>
 </div>
 
@@ -507,7 +661,7 @@ function loadItems() {
         sel.innerHTML += '<option value="' + escH(c) + '">' + escH(c) + '</option>';
       });
 
-      renderItems(allItemsData);
+      filterItems();   // respect current filter state (default: hide inactive)
     })
     .withFailureHandler(function(err) {
       document.getElementById('itemListArea').innerHTML =
@@ -517,14 +671,20 @@ function loadItems() {
 }
 
 function filterItems() {
-  var query = document.getElementById('itemSearch').value.trim().toLowerCase();
-  var cat   = document.getElementById('itemCatFilter').value;
+  var query      = document.getElementById('itemSearch').value.trim().toLowerCase();
+  var cat        = document.getElementById('itemCatFilter').value;
+  var showInact  = document.getElementById('showInactiveCk') && document.getElementById('showInactiveCk').checked;
   var list  = allItemsData.filter(function(it) {
     var matchQ = !query || it.name.toLowerCase().indexOf(query) >= 0;
     var matchC = !cat   || it.category === cat;
-    return matchQ && matchC;
+    var matchS = showInact || !it.status || it.status === 'Active';
+    return matchQ && matchC && matchS;
   });
   renderItems(list);
+}
+
+function toggleInactive() {
+  // label click already triggers checkbox onchange → filterItems()
 }
 
 function renderItems(list) {
@@ -545,10 +705,12 @@ function renderItems(list) {
       ? '<img src="' + escH(it.imageUrl) + '" alt="" onerror="this.parentNode.textContent=\'' + cEmoji(it.category) + '\'">'
       : cEmoji(it.category);
 
-    html += '<div class="item-row" onclick="openEditItem(' + JSON.stringify(it).replace(/"/g,'&quot;') + ')">' +
+    var isInactive = it.status === 'Inactive';
+    var inactiveBadge = isInactive ? '<span class="inactive-badge">停用</span>' : '';
+    html += '<div class="item-row' + (isInactive ? ' inactive' : '') + '" onclick="openEditItem(' + JSON.stringify(it).replace(/"/g,'&quot;') + ')">' +
       '<div class="item-thumb">' + imgHtml + '</div>' +
       '<div class="ir-info">' +
-        '<div class="ir-name"><span class="status-dot ' + dotCls + '"></span>' + escH(it.name) + '</div>' +
+        '<div class="ir-name"><span class="status-dot ' + dotCls + '"></span>' + escH(it.name) + inactiveBadge + '</div>' +
         '<div class="ir-meta">' + escH(it.category||'') +
           (it.supplier ? ' · ' + escH(it.supplier) : '') + '</div>' +
       '</div>' +
@@ -558,6 +720,28 @@ function renderItems(list) {
       '</div></div>';
   });
   document.getElementById('itemListArea').innerHTML = html;
+}
+
+function exportItemsCSV() {
+  if (!allItemsData.length) { showToast('❌ 暂无数据'); return; }
+  var showInact = document.getElementById('showInactiveCk') && document.getElementById('showInactiveCk').checked;
+  var rows = allItemsData.filter(function(it) { return showInact || !it.status || it.status === 'Active'; });
+  var header = ['物品ID','名称','类别','单位','最低库存','最高库存','当前库存','单价(RM)','供应商','状态','备注'];
+  var csv = header.join(',') + '\n';
+  rows.forEach(function(it) {
+    var line = [it.id, it.name, it.category, it.unit,
+      it.minStock, it.maxStock, it.currentQty,
+      it.price, it.supplier || '', it.status || 'Active', it.notes || '']
+      .map(function(v){ return '"' + String(v||'').replace(/"/g,'""') + '"'; }).join(',');
+    csv += line + '\n';
+  });
+  var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = '库存表_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('✅ 已导出 ' + rows.length + ' 件物品');
 }
 
 var editingItem          = null;
@@ -647,6 +831,7 @@ function openEditItem(item) {
       '</select>' +
     '</div>' +
     '<button class="save-btn" id="editSaveBtn" onclick="saveItem()">💾 保存</button>' +
+    '<button class="adjust-item-btn" onclick="openAdjModal()">⚖️ 手动调整库存</button>' +
     '<button class="cancel-btn" onclick="closeEditModal()">取消</button>' +
     '<button class="delete-item-btn" id="editDeleteBtn" onclick="confirmDeleteItem()">🗑️ 删除物品</button>';
 
@@ -746,6 +931,44 @@ function saveItem() {
   } else {
     doUpdate(editingItem.imageUrl || '');
   }
+}
+
+function openAdjModal() {
+  if (!editingItem) return;
+  document.getElementById('adjTitle').textContent = '调整库存 · ' + editingItem.name;
+  document.getElementById('adjCurLabel').textContent = '当前库存：' + (editingItem.currentQty || 0) + ' ' + (editingItem.unit || '');
+  document.getElementById('adjDelta').value = '';
+  document.getElementById('adjReason').value = '';
+  document.getElementById('adjSaveBtn').disabled = false;
+  document.getElementById('adjSaveBtn').textContent = '✅ 确认调整';
+  document.getElementById('adjOverlay').classList.add('show');
+}
+function closeAdjModal() {
+  document.getElementById('adjOverlay').classList.remove('show');
+}
+function confirmAdjust() {
+  var delta  = Number(document.getElementById('adjDelta').value);
+  var reason = document.getElementById('adjReason').value.trim() || '手动调整';
+  if (!delta || isNaN(delta)) { showToast('❌ 请输入有效数量'); return; }
+  var btn = document.getElementById('adjSaveBtn');
+  btn.disabled = true; btn.textContent = '⏳ 保存中...';
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      closeAdjModal();
+      if (resp && resp.success) {
+        showToast('✅ 库存已调整：' + resp.oldQty + ' → ' + resp.newQty);
+        editingItem.currentQty = resp.newQty;
+        loaded.items = false;
+        loadItems();
+      } else {
+        showToast('❌ ' + (resp ? resp.error : '调整失败'));
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false; btn.textContent = '✅ 确认调整';
+      showToast('❌ ' + (err.message || err));
+    })
+    .adjustStock(currentUser.username, editingItem.id, delta, reason);
 }
 
 function closeEditModal() {
@@ -910,9 +1133,16 @@ function closeAssignModal(evt) {
 // ══════════════════════════════════════════════
 // Tab 2: 盘点历史
 // ══════════════════════════════════════════════
+function reloadHist() {
+  loaded.hist = false;
+  loadHist();
+}
+
 function loadHist() {
   document.getElementById('histArea').innerHTML =
     '<div class="loading-area"><div class="spinner"></div><div>加载历史...</div></div>';
+  var dSel = document.getElementById('histDays');
+  var days = dSel ? Number(dSel.value) || 30 : 30;
   google.script.run
     .withSuccessHandler(function(resp) {
       if (!resp || !resp.success) {
@@ -928,25 +1158,28 @@ function loadHist() {
       document.getElementById('histArea').innerHTML =
         '<div class="empty-state"><div class="icon">❌</div><div>' + (err.message||err) + '</div></div>';
     })
-    .getRecentCheckHistory(30);
+    .getRecentCheckHistory(days);
 }
 
 function renderHist() {
+  var dSel = document.getElementById('histDays');
+  var days = dSel ? (dSel.value || 30) : 30;
   if (!histData.length) {
     document.getElementById('histArea').innerHTML =
-      '<div class="empty-state"><div class="icon">📅</div><div>最近30天无盘点记录</div></div>';
+      '<div class="empty-state"><div class="icon">📅</div><div>最近 ' + days + ' 天无盘点记录</div></div>';
     return;
   }
   var html = '';
   histData.forEach(function(h) {
-    var badge = h.abnormalCount > 0
+    var hasWarn = h.abnormalCount > 0;
+    var badge = hasWarn
       ? '<span class="hc-badge badge-warn">⚠️ 异常 ' + h.abnormalCount + '</span>'
       : '<span class="hc-badge badge-ok">✅ 正常</span>';
-    html += '<div class="hist-card">' +
+    html += '<div class="hist-card ' + (hasWarn ? 'hist-warn' : 'hist-normal') + '">' +
       '<div class="hc-date">' + escH(h.date) + badge + '</div>' +
       '<div class="hc-meta">盘点 ' + h.itemCount + ' 件 · ' + escH(h.staff||'--') +
         (h.lowStockCount > 0 ? ' · 🔴低库存 ' + h.lowStockCount : '') +
-        (h.highStockCount > 0 ? ' · 🟡高库存 ' + h.highStockCount : '') +
+        (h.highStockCount > 0 ? ' · 🟡超库存 ' + h.highStockCount : '') +
       '</div></div>';
   });
   document.getElementById('histArea').innerHTML = html;
@@ -1042,6 +1275,31 @@ function updatePO(poId, status) {
     })
     .withFailureHandler(function(err){ showToast('❌ ' + (err.message||err)); })
     .updatePOStatus(poId, status);
+}
+
+function generatePO() {
+  var btn = document.getElementById('genPoBtn');
+  btn.disabled = true; btn.textContent = '⏳ 检查低库存中...';
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      btn.disabled = false; btn.textContent = '🛒 生成补货采购单';
+      if (!resp || !resp.success) {
+        showToast('❌ ' + (resp ? resp.error : '生成失败'));
+        return;
+      }
+      if (resp.itemCount === 0) {
+        showToast('✅ 全部库存充足，无需补货');
+        return;
+      }
+      showToast('✅ 已生成采购单：' + resp.itemCount + ' 件，总额 RM ' + (resp.totalCost||0).toFixed(2));
+      loaded.po = false;
+      loadPO();
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false; btn.textContent = '🛒 生成补货采购单';
+      showToast('❌ ' + (err.message || err));
+    })
+    .generatePurchaseOrder();
 }
 
 // ══════════════════════════════════════════════
@@ -1188,8 +1446,11 @@ function openAcctModal(username) {
     '<div class="form-group"><label class="form-label">角色</label>' +
     '<select class="form-input" id="af_role" onchange="onRoleChange(this)">' + roleOpts + '</select></div>' +
     '<div class="form-group"><label class="form-label">' + (isCreate ? '密码' : '新密码（留空不修改）') + '</label>' +
+    '<div class="pw-wrap">' +
     '<input class="form-input" id="af_password" type="password" placeholder="' +
-    (isCreate ? '请设置密码' : '留空则不修改') + '" autocomplete="new-password"></div>' +
+    (isCreate ? '请设置密码' : '留空则不修改') + '" autocomplete="new-password">' +
+    '<button type="button" class="pw-eye" onclick="var f=document.getElementById(\'af_password\');var e=this;f.type=f.type===\'password\'?\'text\':\'password\';e.textContent=f.type===\'password\'?\'👁\':\'🙈\'">👁</button>' +
+    '</div></div>' +
     '<div class="form-group"><label class="form-label">页面权限</label>' +
     '<div id="pagePermWrap" style="padding:4px 0">' + pageChips + '</div>' +
     '<div id="adminTabsSection" style="display:' + adminTabsDisplay + ';margin-top:8px">' +
