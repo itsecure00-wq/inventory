@@ -912,7 +912,7 @@ function renderHist() {
       : '<span class="hc-badge badge-ok">✅ 正常</span>';
     html += '<div class="hist-card">' +
       '<div class="hc-date">' + escH(h.date) + badge + '</div>' +
-      '<div class="hc-meta">盘点 ' + h.itemCount + ' 件 · ' + escH(h.staffName||'--') +
+      '<div class="hc-meta">盘点 ' + h.itemCount + ' 件 · ' + escH(h.staff||'--') +
         (h.lowStockCount > 0 ? ' · 🔴低库存 ' + h.lowStockCount : '') +
         (h.highStockCount > 0 ? ' · 🟡高库存 ' + h.highStockCount : '') +
       '</div></div>';
@@ -1063,9 +1063,6 @@ function renderAcct() {
   acctData.forEach(function(acc) {
     var badge   = roleBadge[acc.role] || escH(acc.role);
     var isSelf  = acc.username === currentUser.username;
-    var catsArr = acc.assignedCats
-      ? acc.assignedCats.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
-    var catsLabel = catsArr.length ? catsArr.join(' · ') : '全部分类';
 
     var actionHtml = '';
     if (isBoss) {
@@ -1087,7 +1084,6 @@ function renderAcct() {
           '<div class="sc-role" style="margin-top:3px">@' + escH(acc.username) + '&nbsp;&nbsp;' + badge + '</div>' +
         '</div>' +
       '</div>' +
-      '<div style="font-size:11px;color:#9e9e9e;margin-top:5px">负责: ' + escH(catsLabel) + '</div>' +
       actionHtml +
     '</div>';
   });

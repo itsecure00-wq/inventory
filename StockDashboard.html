@@ -520,11 +520,13 @@ function renderAllStock(items) {
   }
 
   // 按分类分组
-  var groups = {}, order = [];
+  var groups = {}, order = [], groupLastUpd = {};
   items.forEach(function(it) {
     var cat = it.category || '未分类';
     if (!groups[cat]) { groups[cat] = []; order.push(cat); }
     groups[cat].push(it);
+    var lu = it.lastUpdate || '';
+    if (lu && (!groupLastUpd[cat] || lu > groupLastUpd[cat])) groupLastUpd[cat] = lu;
   });
 
   var html = '';
@@ -541,8 +543,11 @@ function renderAllStock(items) {
                 '<span style="color:#388e3c">🟢' + (arr.length - nLow - nHigh) + '</span>';
     var bodyId = 'catb_' + ci;
 
+    var luLabel = groupLastUpd[cat]
+      ? '<span style="font-size:10px;color:#9e9e9e;font-weight:400"> · ' + groupLastUpd[cat] + '</span>'
+      : '';
     html += '<div class="cat-header" onclick="toggleCat(\'' + bodyId + '\',this)">' +
-      '<span>' + icon + ' ' + escH(cat) + ' (' + arr.length + ')</span>' +
+      '<span>' + icon + ' ' + escH(cat) + ' (' + arr.length + ')' + luLabel + '</span>' +
       '<span>' + badge + ' <span class="chevron">▶</span></span>' +
     '</div>';
     html += '<div class="cat-body" id="' + bodyId + '">';

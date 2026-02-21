@@ -586,6 +586,7 @@ function getDashboardAll() {
         id: row[C.ID], name: row[C.NAME], category: cat, unit: row[C.UNIT],
         currentQty: qty, minStock: min, maxStock: max, price: price,
         supplier: row[C.SUPPLIER], freq: freq, status: row[C.STATUS],
+        lastUpdate: String(row[C.LAST_UPDATE] || '').slice(0, 10),
         imageUrl: String(row[C.IMAGE] || '').trim()
       });
     }
