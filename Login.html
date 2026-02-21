@@ -39,7 +39,7 @@
 
 <div class="login-card text-center">
   <div class="brand-icon mb-2">🍲</div>
-  <div class="brand-title">张重辉火锅</div>
+  <div class="brand-title">GLOBAL CHAIN F&amp;B SDN. BHD.</div>
   <div class="brand-sub mb-4">百万镇 Permas Jaya · 库存管理系统</div>
 
   <div id="loginForm">
@@ -73,12 +73,23 @@
   function lsSet(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
   function lsDel(key) { try { localStorage.removeItem(key); } catch(e) {} }
 
+  // ── 页面权限辅助 ──
+  var ROLE_DEFAULT_PERMS = {
+    'Boss':    { pages: ['check','dashboard','admin'], adminTabs: [0,1,2,3,4] },
+    'Manager': { pages: ['dashboard','admin'],         adminTabs: [0,1,2,3]   },
+    'Staff':   { pages: ['check'],                     adminTabs: []           }
+  };
+  function parsePermissions(permStr, role) {
+    try { var p = JSON.parse(permStr); if (p && Array.isArray(p.pages)) return p; } catch(e) {}
+    return ROLE_DEFAULT_PERMS[role] || { pages: ['check'], adminTabs: [] };
+  }
+
   window.onload = function() {
     var saved = lsGet('ims_user');
     if (saved) {
       try {
         var user = JSON.parse(saved);
-        redirectByRole(user.role);
+        redirectByRole(user.role, user.permissions);
         return;
       } catch(e) { lsDel('ims_user'); }
     }
@@ -133,7 +144,7 @@
         if (result.success) {
           loginAttempts = 0;
           lsSet('ims_user', JSON.stringify(result));
-          redirectByRole(result.role);
+          redirectByRole(result.role, result.permissions);
         } else {
           loginAttempts++;
           if (loginAttempts >= 5) {
@@ -157,13 +168,42 @@
       .verifyStaff(username, password);
   }
 
-  function redirectByRole(role) {
-    var base = window.top.location.href.split('?')[0];
-    if (role === 'Staff') {
-      window.top.location.href = base + '?page=check';
-    } else {
-      window.top.location.href = base + '?page=dashboard';
+  function redirectByRole(role, permissionsStr) {
+    var perms = parsePermissions(permissionsStr, role);
+    // Manager/Boss 优先进 dashboard；Staff 优先进 check
+    var PAGE_ORDER = (role === 'Staff') ? ['check', 'dashboard', 'admin']
+                                        : ['dashboard', 'admin', 'check'];
+    var page = null;
+    for (var i = 0; i < PAGE_ORDER.length; i++) {
+      if (perms.pages.indexOf(PAGE_ORDER[i]) >= 0) { page = PAGE_ORDER[i]; break; }
     }
+    if (!page) {
+      var errorEl = document.getElementById('errorMsg');
+      errorEl.textContent = '此账号未被授权访问任何页面，请联系 Boss';
+      errorEl.style.display = 'block';
+      document.getElementById('btnLogin').disabled = false;
+      document.getElementById('btnText').textContent = '登 录';
+      document.getElementById('btnSpinner').style.display = 'none';
+      return;
+    }
+    var targetPage = page;
+    google.script.run
+      .withSuccessHandler(function(url) {
+        // Use <a target="_top"> click — the only reliable navigation from GAS sandbox
+        var a = document.createElement('a');
+        a.href = url + '?page=' + targetPage;
+        a.target = '_top';
+        document.body.appendChild(a);
+        a.click();
+      })
+      .withFailureHandler(function(err) {
+        document.getElementById('errorMsg').textContent = '跳转失败: ' + (err.message || err);
+        document.getElementById('errorMsg').style.display = 'block';
+        document.getElementById('btnLogin').disabled = false;
+        document.getElementById('btnText').textContent = '登 录';
+        document.getElementById('btnSpinner').style.display = 'none';
+      })
+      .getAppUrl();
   }
 </script>
 

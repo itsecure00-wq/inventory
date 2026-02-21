@@ -1,404 +1,1084 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>员工盘点</title>
   <style>
-    :root { --brand: #d32f2f; --brand-light: #ffebee; --green: #2e7d32; --orange: #f57c00; }
-    body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding-bottom: 100px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      background: #f5f5f5;
+      color: #212121;
+      min-height: 100vh;
+    }
 
-    .top-bar { background: var(--brand); color: white; padding: 16px 20px; position: sticky; top: 0; z-index: 100; }
-    .top-bar h6 { margin: 0; font-weight: 700; font-size: 16px; }
-    .top-bar small { opacity: 0.85; }
-
-    .progress-section { background: white; padding: 14px 20px; border-bottom: 1px solid #eee; }
-    .progress { height: 10px; border-radius: 5px; }
-    .progress-bar { background: var(--brand); transition: width 0.5s; }
-    .progress-text { font-size: 13px; color: #666; }
-
-    .cat-header {
-      background: white; padding: 12px 20px; margin-top: 8px;
-      border-bottom: 1px solid #eee; cursor: pointer; user-select: none;
+    /* ── 顶栏 ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: #d32f2f;
+      color: #fff;
+      padding: 12px 16px;
       display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
     }
-    .cat-header.disabled { background: #f9f9f9; color: #bbb; }
-    .cat-title { font-weight: 600; font-size: 15px; }
-    .cat-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; }
+    .topbar-title { font-size: 16px; font-weight: 600; }
+    .topbar-sub { font-size: 11px; opacity: .85; margin-top: 2px; }
+    .logout-btn {
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.4);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
 
-    .item-row {
-      background: white; padding: 12px 20px; border-bottom: 1px solid #f0f0f0;
+    /* ── 进度栏 ── */
+    .progress-bar-wrap {
+      background: #fff;
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: #757575; margin-bottom: 6px;
+    }
+    .progress-track {
+      height: 6px; background: #ffcdd2; border-radius: 3px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: #d32f2f; border-radius: 3px;
+      transition: width .4s ease;
+    }
+
+    /* ── 分类 Tab ── */
+    .cat-tabs {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex; overflow-x: auto; gap: 0;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .cat-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex: 0 0 auto;
+      padding: 10px 14px;
+      font-size: 13px; color: #757575;
+      cursor: pointer; white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: all .2s;
+    }
+    .cat-tab.active {
+      color: #d32f2f;
+      border-bottom-color: #d32f2f;
+      font-weight: 600;
+    }
+
+    /* ── 状态区 ── */
+    .status-area {
+      padding: 40px 24px;
+      text-align: center;
+      color: #9e9e9e;
+      font-size: 14px;
+    }
+    .spinner {
+      width: 32px; height: 32px; margin: 0 auto 14px;
+      border: 3px solid #ffcdd2;
+      border-top-color: #d32f2f;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 物品卡片 ── */
+    .items-list { padding: 8px 0 130px; }
+
+    .item-card {
+      background: #fff;
+      margin: 6px 12px;
+      border-radius: 10px;
+      padding: 12px 12px 12px 12px;
       display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      border-left: 3px solid transparent;
+      transition: border-color .2s;
     }
-    .item-name { flex: 1; font-size: 14px; font-weight: 500; }
-    .item-current { font-size: 12px; color: #999; min-width: 50px; text-align: center; }
-    .item-input {
-      width: 70px; text-align: center; border: 2px solid #e0e0e0; border-radius: 10px;
-      padding: 8px 4px; font-size: 16px; font-weight: 600;
-      -webkit-appearance: none; appearance: none;
-    }
-    .item-input:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px rgba(211,47,47,0.15); }
-    .item-input.warning { border-color: var(--orange); background: #fff3e0; }
-    .item-input.checked { border-color: var(--green); background: #e8f5e9; }
-    .item-unit { font-size: 12px; color: #999; min-width: 28px; }
-    .diff-badge { font-size: 11px; min-width: 45px; text-align: center; }
+    .item-card.has-input { border-left-color: #4caf50; }
 
+    /* 物品图片 */
+    .item-photo {
+      width: 56px; height: 56px; flex-shrink: 0;
+      border-radius: 8px; overflow: hidden;
+      background: #f5f5f5;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .item-photo img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+
+    /* 物品信息 */
+    .item-info { flex: 1; min-width: 0; }
+    .item-name {
+      font-size: 14px; font-weight: 600; color: #212121;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .item-meta { font-size: 11px; color: #9e9e9e; margin-top: 2px; }
+    .item-stock { font-size: 12px; color: #616161; margin-top: 3px; }
+    .stock-low  { color: #d32f2f; font-weight: 600; }
+    .stock-high { color: #ff6f00; font-weight: 600; }
+    .stock-ok   { color: #388e3c; }
+
+    /* 右侧输入 */
+    .item-input-wrap {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+      flex-shrink: 0;
+    }
+    .qty-row { display: flex; align-items: center; gap: 4px; }
+    .qty-input {
+      width: 64px; height: 36px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 16px; font-weight: 600; color: #212121;
+      background: #fafafa;
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color .2s, background .2s;
+    }
+    .qty-input:focus { border-color: #d32f2f; background: #fff; }
+    .qty-input.filled { border-color: #4caf50; background: #f1f8f4; }
+    .qty-unit { font-size: 12px; color: #757575; min-width: 20px; }
+    .qty-diff { font-size: 11px; text-align: right; min-height: 16px; }
+    .diff-neg  { color: #d32f2f; }
+    .diff-pos  { color: #388e3c; }
+    .diff-zero { color: #9e9e9e; }
+
+    /* ── 底部提交栏 ── */
     .bottom-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; background: white;
-      padding: 12px 20px; box-shadow: 0 -4px 12px rgba(0,0,0,0.08); z-index: 100;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: #fff;
+      padding: 10px 16px 16px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,.12);
     }
-    .btn-submit {
-      background: var(--brand); border: none; border-radius: 12px;
-      padding: 14px; font-size: 16px; font-weight: 600; width: 100%; color: white;
+    .bottom-summary {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: #757575;
+      margin-bottom: 8px;
     }
-    .btn-submit:disabled { background: #ccc; color: #999; }
+    .draft-label { color: #ff9800; display: none; }
+    .submit-btn {
+      width: 100%; padding: 13px;
+      background: #d32f2f; color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 16px; font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+    .submit-btn:active { background: #b71c1c; transform: scale(.98); }
+    .submit-btn:disabled { background: #bdbdbd; cursor: not-allowed; transform: none; }
 
-    .result-card {
-      background: white; border-radius: 16px; padding: 24px;
-      margin: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    /* ── 弹窗 ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.55);
+      display: none; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 14px;
+      width: 100%; max-width: 360px;
+      padding: 24px; text-align: center;
+    }
+    .modal-icon { font-size: 42px; margin-bottom: 12px; }
+    .modal-title { font-size: 18px; font-weight: 700; color: #212121; margin-bottom: 8px; }
+    .modal-msg { font-size: 13px; color: #616161; line-height: 1.6; margin-bottom: 20px; }
+    .modal-btn {
+      width: 100%; padding: 12px;
+      border: none; border-radius: 8px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; margin-bottom: 8px;
+    }
+    .modal-btn:last-child { margin-bottom: 0; }
+    .modal-btn-primary   { background: #d32f2f; color: #fff; }
+    .modal-btn-secondary { background: #f5f5f5; color: #616161; }
+
+    .abnormal-list {
+      text-align: left; background: #fff3e0;
+      border-radius: 8px; padding: 10px 12px;
+      margin-bottom: 16px; font-size: 12px;
+      max-height: 160px; overflow-y: auto;
+    }
+    .abnormal-item { padding: 3px 0; color: #e65100; }
+
+    .success-anim {
+      font-size: 56px;
+      animation: popIn .4s cubic-bezier(.17,.89,.32,1.49);
+    }
+    @keyframes popIn {
+      0%  { transform: scale(.4); opacity: 0; }
+      100%{ transform: scale(1);  opacity: 1; }
     }
 
-    .loading { text-align: center; padding: 60px 20px; color: #999; }
-    .loading .spinner-border { color: var(--brand); width: 40px; height: 40px; }
-
-    .nav-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
-      border-radius: 8px; color: white; font-size: 13px; font-weight: 500;
-      padding: 8px 12px; min-height: 44px; min-width: 44px;
-      justify-content: center; text-decoration: none; cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+    .empty-state {
+      padding: 60px 24px; text-align: center; color: #9e9e9e;
     }
-    .nav-btn:active { background: rgba(255,255,255,0.3); }
-    .nav-btn i { font-size: 16px; }
+    .empty-state .icon { font-size: 52px; margin-bottom: 14px; }
+
+    /* ── Toast ── */
+    .ims-toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      z-index: 9999; background: rgba(33,33,33,.92); color: #fff;
+      padding: 10px 20px; border-radius: 24px; font-size: 14px;
+      white-space: nowrap; pointer-events: none;
+      animation: toastIn .25s ease;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
+    }
+
+    /* ── 添加物品 FAB ── */
+    .add-item-fab {
+      position: fixed; bottom: 90px; right: 16px; z-index: 150;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: #37474f; color: #fff; border: none;
+      font-size: 24px; line-height: 1;
+      box-shadow: 0 3px 10px rgba(0,0,0,.3);
+      cursor: pointer; display: none;
+      align-items: center; justify-content: center;
+    }
+
+    /* ── 添加物品 sheet modal ── */
+    .add-item-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.45);
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    .add-item-overlay.show { display: flex; }
+    .add-item-sheet {
+      background: #fff; width: 100%; max-width: 480px;
+      border-radius: 18px 18px 0 0;
+      padding: 12px 20px 32px;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .ai-handle {
+      width: 40px; height: 4px; border-radius: 2px;
+      background: #ddd; margin: 0 auto 14px;
+    }
+    .ai-title {
+      font-size: 17px; font-weight: 700; color: #212121;
+      margin-bottom: 18px; text-align: center;
+    }
+    .ai-photo-area {
+      width: 100%; height: 110px;
+      border: 2px dashed #bdbdbd; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 6px;
+      cursor: pointer; margin-bottom: 16px;
+      background: #fafafa; overflow: hidden; position: relative;
+    }
+    .ai-photo-area img {
+      width: 100%; height: 100%; object-fit: cover; border-radius: 10px;
+    }
+    .ai-photo-placeholder { font-size: 13px; color: #757575; text-align: center; }
+    .ai-label {
+      font-size: 12px; color: #757575; margin-bottom: 4px; margin-top: 10px;
+      display: block;
+    }
+    .ai-input {
+      width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0;
+      border-radius: 8px; font-size: 15px; color: #212121;
+      background: #fafafa; margin-bottom: 2px;
+    }
+    .ai-input:focus { outline: none; border-color: #37474f; background: #fff; }
+    .ai-save-btn {
+      width: 100%; padding: 13px; margin-top: 20px;
+      background: #37474f; color: #fff; border: none;
+      border-radius: 10px; font-size: 16px; font-weight: 600;
+      cursor: pointer;
+    }
+    .ai-save-btn:disabled { background: #9e9e9e; cursor: not-allowed; }
+    .ai-cancel-btn {
+      width: 100%; padding: 11px; margin-top: 8px;
+      background: #f5f5f5; color: #616161; border: none;
+      border-radius: 10px; font-size: 14px; cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-<div class="top-bar">
-  <div class="d-flex justify-content-between align-items-center">
-    <div>
-      <h6>🍲 张重辉火锅 · 百万镇</h6>
-      <small id="staffInfo">加载中...</small>
-    </div>
-    <div style="display:flex;gap:6px;align-items:center">
-      <span id="dashLink"></span>
-      <button class="nav-btn" onclick="logout()"><i class="bi bi-box-arrow-right"></i> 登出</button>
-    </div>
+<!-- 顶栏 -->
+<div class="topbar">
+  <div>
+    <div class="topbar-title">🔥 库存盘点</div>
+    <div class="topbar-sub" id="staffLabel">员工盘点</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="logout-btn" id="addItemTopBtn" onclick="openAddItemModal()"
+            style="display:none;background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5)">＋ 物品</button>
+    <button class="logout-btn" onclick="doLogout()">退出</button>
   </div>
 </div>
 
-<div class="progress-section" id="progressSection">
-  <div class="d-flex justify-content-between align-items-center mb-1">
-    <span class="progress-text">📋 今日盘点进度</span>
-    <span class="progress-text"><strong id="progressNum">0/0</strong></span>
+<!-- 进度栏 -->
+<div class="progress-bar-wrap">
+  <div class="progress-label">
+    <span id="progressText">加载中...</span>
+    <span id="progressPct">--</span>
   </div>
-  <div class="progress">
-    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
   </div>
 </div>
 
-<div class="loading" id="loadingDiv">
-  <div class="spinner-border mb-3"></div>
-  <div>加载盘点清单...</div>
+<!-- 分类 Tab -->
+<div class="cat-tabs" id="catTabs"></div>
+
+<!-- 状态 / 列表 -->
+<div id="statusArea" class="status-area">
+  <div class="spinner"></div>
+  <div>正在加载盘点物品...</div>
 </div>
+<div class="items-list" id="itemsList" style="display:none"></div>
 
-<div id="itemsList" style="display:none"></div>
-<div id="resultDiv" style="display:none"></div>
-
-<div class="bottom-bar" id="bottomBar" style="display:none">
-  <button class="btn btn-submit" id="btnSubmit" onclick="submitCheck()" disabled>
-    <span id="submitText">✅ 提交盘点 (0项)</span>
-    <span id="submitSpinner" class="spinner-border spinner-border-sm" style="display:none"></span>
+<!-- 底部提交栏 -->
+<div class="bottom-bar">
+  <div class="bottom-summary">
+    <span id="filledCount">已填: 0 / 0</span>
+    <span class="draft-label" id="draftLabel">📝 草稿已保存</span>
+  </div>
+  <button class="submit-btn" id="submitBtn" onclick="confirmSubmit()" disabled>
+    提交盘点记录
   </button>
 </div>
 
+<!-- 弹窗 -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<!-- 添加物品 FAB -->
+<button class="add-item-fab" id="addItemFab" onclick="openAddItemModal()">＋</button>
+
+<!-- 添加物品 Sheet Modal -->
+<div class="add-item-overlay" id="addItemOverlay" onclick="closeAddItemOverlayBg(event)">
+  <div class="add-item-sheet">
+    <div class="ai-handle"></div>
+    <div class="ai-title">➕ 新增物品</div>
+
+    <!-- 图片区 -->
+    <div class="ai-photo-area" id="aiPhotoArea" onclick="triggerPhotoInput()">
+      <img id="aiPhotoPreview" style="display:none">
+      <div class="ai-photo-placeholder" id="aiPhotoPlaceholder">
+        <div style="font-size:28px">📷</div>
+        <div>拍照 / 选图（可选）</div>
+      </div>
+    </div>
+    <input type="file" id="aiPhotoInput" accept="image/*" capture="environment"
+           style="display:none" onchange="onPhotoSelected(this)">
+
+    <!-- 物品名称 -->
+    <label class="ai-label">物品名称 <span style="color:#d32f2f">*</span></label>
+    <input id="ai_name" class="ai-input" type="text" placeholder="例：五花肉">
+
+    <!-- 类别 -->
+    <label class="ai-label">类别 <span style="color:#d32f2f">*</span></label>
+    <select id="ai_cat" class="ai-input"></select>
+
+    <!-- 计量单位 -->
+    <label class="ai-label">计量单位 <span style="color:#d32f2f">*</span></label>
+    <select id="ai_unit" class="ai-input" onchange="onUnitChange(this)">
+      <option value="kg">kg（公斤）</option>
+      <option value="g">g（克）</option>
+      <option value="包">包</option>
+      <option value="盒">盒</option>
+      <option value="瓶">瓶</option>
+      <option value="桶">桶</option>
+      <option value="箱">箱</option>
+      <option value="袋">袋</option>
+      <option value="份">份</option>
+      <option value="条">条</option>
+      <option value="罐">罐</option>
+      <option value="升">升（L）</option>
+      <option value="毫升">毫升（mL）</option>
+      <option value="个">个</option>
+      <option value="片">片</option>
+    </select>
+
+    <!-- 每包件数（仅当选包装单位时显示） -->
+    <div id="aiPkgRow" style="display:none">
+      <label class="ai-label">每包件数 <span style="color:#d32f2f">*</span></label>
+      <input id="ai_pkg_qty" class="ai-input" type="number" min="1" placeholder="例：10">
+    </div>
+
+    <button id="addItemSaveBtn" class="ai-save-btn" onclick="saveNewItem()">+ 添加物品</button>
+    <button class="ai-cancel-btn" onclick="closeAddItemOverlayDirect()">取消</button>
+  </div>
+</div>
+
 <script>
-  var currentUser = null;
-  var allItems = [];
-  var filledCount = 0;
-  var CATEGORY_ICONS = {
-    '肉类': '🥩', '菜类': '🥬', '海鲜': '🦐', '丸子': '🍜',
-    '锅底': '🫕', '调味料': '🧂', '酒水': '🍺', '消耗品': '🧻',
-    '甜品': '🍰', '饮品类': '🧃'
-  };
+// ══════════════════════════════════════════════
+// Storage 辅助
+// ══════════════════════════════════════════════
+function ssGet(k)    { try { return sessionStorage.getItem(k); }     catch(e){ return null; } }
+function ssSet(k, v) { try { sessionStorage.setItem(k, v); }         catch(e){} }
+function ssRemove(k) { try { sessionStorage.removeItem(k); }         catch(e){} }
+function ssClearPfx(pfx) {
+  try {
+    Object.keys(sessionStorage)
+      .filter(function(k){ return k.indexOf(pfx) === 0; })
+      .forEach(function(k){ sessionStorage.removeItem(k); });
+  } catch(e) {}
+}
+function lsGet(k)  { try { return localStorage.getItem(k);  } catch(e){ return null; } }
+function lsDel(k)  { try { localStorage.removeItem(k);      } catch(e){} }
 
-  function lsGet(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
-  function lsSet(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
-  function lsDel(key) { try { localStorage.removeItem(key); } catch(e) {} }
+// ── 页面权限辅助 ──
+var ROLE_DEFAULT_PERMS = {
+  'Boss':    { pages: ['check','dashboard','admin'], adminTabs: [0,1,2,3,4] },
+  'Manager': { pages: ['dashboard','admin'],         adminTabs: [0,1,2,3]   },
+  'Staff':   { pages: ['check'],                     adminTabs: []           }
+};
+function parsePermissions(permStr, role) {
+  try { var p = JSON.parse(permStr); if (p && Array.isArray(p.pages)) return p; } catch(e) {}
+  return ROLE_DEFAULT_PERMS[role] || { pages: ['check'], adminTabs: [] };
+}
+function navigateTo(page) {
+  google.script.run.withSuccessHandler(function(url) {
+    var a = document.createElement('a');
+    a.href = url + '?page=' + page;
+    a.target = '_top';
+    document.body.appendChild(a);
+    a.click();
+  }).getAppUrl();
+}
 
-  window.onload = function() {
-    var saved = lsGet('ims_user');
-    if (!saved) {
-      document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999">' +
-        '<div style="font-size:36px;margin-bottom:12px">🔒</div>' +
-        '<div style="font-size:15px">未检测到登录信息，正在跳转登录...</div></div>';
-      setTimeout(function() { goLogin(); }, 1500);
-      return;
-    }
-    try {
-      currentUser = JSON.parse(saved);
-      document.getElementById('staffInfo').textContent =
-        currentUser.name + ' · ' + new Date().toLocaleDateString('zh-CN');
-      if (currentUser.role === 'Manager' || currentUser.role === 'Boss') {
-        document.getElementById('dashLink').innerHTML =
-          '<button class="nav-btn" onclick="goDash()"><i class="bi bi-graph-up"></i> 看板</button>';
+// ══════════════════════════════════════════════
+// 全局状态
+// ══════════════════════════════════════════════
+var currentUser  = null;
+var allItems     = [];
+var currentCat   = '全部';
+var DRAFT_PFX    = 'ckd_';   // check-draft prefix
+
+// ── Toast 提示 ──
+function showToast(msg, duration) {
+  var el = document.createElement('div');
+  el.className = 'ims-toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() {
+    el.style.transition = 'opacity .3s';
+    el.style.opacity = '0';
+    setTimeout(function() { el.parentNode && el.parentNode.removeChild(el); }, 350);
+  }, duration || 2500);
+}
+
+// ── 添加物品 ──
+var pendingPhotoBase64 = null;
+var pendingPhotoMime   = null;
+var pendingPhotoName   = null;
+
+var PKG_UNITS = ['包','盒','箱','袋'];
+function onUnitChange(sel) {
+  var show = PKG_UNITS.indexOf(sel.value) >= 0;
+  document.getElementById('aiPkgRow').style.display = show ? '' : 'none';
+  if (!show) document.getElementById('ai_pkg_qty').value = '';
+}
+
+function openAddItemModal() {
+  // 重置表单
+  pendingPhotoBase64 = null; pendingPhotoMime = null; pendingPhotoName = null;
+  document.getElementById('aiPhotoPreview').style.display    = 'none';
+  document.getElementById('aiPhotoPreview').src              = '';
+  document.getElementById('aiPhotoPlaceholder').style.display = 'flex';
+  document.getElementById('aiPhotoInput').value              = '';
+  document.getElementById('ai_name').value                   = '';
+  document.getElementById('ai_unit').selectedIndex           = 0;
+  document.getElementById('aiPkgRow').style.display          = 'none';
+  document.getElementById('ai_pkg_qty').value                = '';
+
+  // 填充类别 select（优先从已有物品提取）
+  var catSel = document.getElementById('ai_cat');
+  catSel.innerHTML = '';
+  var defaultCats = [
+    '肉类','菜类','海鲜','调料','饮料','主食',
+    '蘸料','油料','冷冻','干货','丸子','锅底',
+    '甜品','酒水','小吃','消耗品','餐具','其他'
+  ];
+  // 合并默认分类 + 已有物品分类（确保所有默认类别始终显示）
+  var merged = {};
+  defaultCats.forEach(function(c){ merged[c] = 1; });
+  allItems.forEach(function(it){ if (it.category) merged[it.category] = 1; });
+  var catList = Object.keys(merged).sort(function(a, b) {
+    var ia = defaultCats.indexOf(a), ib = defaultCats.indexOf(b);
+    if (ia >= 0 && ib >= 0) return ia - ib;
+    if (ia >= 0) return -1;
+    if (ib >= 0) return  1;
+    return a.localeCompare(b);
+  });
+  catList.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    catSel.appendChild(opt);
+  });
+
+  // 重置按钮
+  var btn = document.getElementById('addItemSaveBtn');
+  btn.disabled = false; btn.textContent = '+ 添加物品';
+
+  document.getElementById('addItemOverlay').classList.add('show');
+}
+
+function triggerPhotoInput() {
+  document.getElementById('aiPhotoInput').click();
+}
+
+function onPhotoSelected(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var MAX = 800, w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else       { w = Math.round(w * MAX / h); h = MAX; }
       }
-      loadCheckItems();
-    } catch(e) { goLogin(); }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var compressed = canvas.toDataURL('image/jpeg', 0.7);
+      pendingPhotoBase64 = compressed.split(',')[1];
+      pendingPhotoMime   = 'image/jpeg';
+      pendingPhotoName   = 'item_' + Date.now() + '.jpg';
+      var preview = document.getElementById('aiPhotoPreview');
+      preview.src = compressed;
+      preview.style.display = 'block';
+      document.getElementById('aiPhotoPlaceholder').style.display = 'none';
+    };
+    img.src = e.target.result;
   };
+  reader.readAsDataURL(file);
+}
 
-  function goLogin() {
-    lsDel('ims_user');
-    window.top.location.href = window.top.location.href.split('?')[0] + '?page=login';
+function saveNewItem() {
+  var name     = document.getElementById('ai_name').value.trim();
+  var cat      = document.getElementById('ai_cat').value;
+  var unitBase = document.getElementById('ai_unit').value;
+  var pkgQty   = document.getElementById('ai_pkg_qty').value.trim();
+  if (!name) { showToast('❌ 物品名称不能为空'); return; }
+  var unit = unitBase;
+  if (PKG_UNITS.indexOf(unitBase) >= 0) {
+    if (!pkgQty || Number(pkgQty) < 1) { showToast('❌ 请填写每包件数'); return; }
+    unit = unitBase + '(' + pkgQty + '件)';
   }
-  function goDash() {
-    window.top.location.href = window.top.location.href.split('?')[0] + '?page=dashboard';
-  }
-  function logout() { goLogin(); }
 
-  var loadingTimer = null;
-  function loadCheckItems() {
-    document.getElementById('loadingDiv').style.display = 'block';
-    document.getElementById('loadingDiv').innerHTML =
-      '<div class="spinner-border mb-3" style="color:var(--brand);width:40px;height:40px"></div>' +
-      '<div>加载盘点清单...</div>';
-    document.getElementById('itemsList').style.display = 'none';
+  var btn = document.getElementById('addItemSaveBtn');
+  btn.disabled = true; btn.textContent = '⏳ 保存中...';
 
-    if (loadingTimer) clearTimeout(loadingTimer);
-    loadingTimer = setTimeout(function() {
-      var ld = document.getElementById('loadingDiv');
-      if (ld && ld.style.display !== 'none') {
-        ld.innerHTML = '<div style="color:var(--brand)">⏱ 加载超时，服务器响应缓慢</div>' +
-          '<button class="btn btn-sm btn-outline-danger mt-3" onclick="loadCheckItems()">重试</button>';
-      }
-    }, 30000);
-
+  function doCreate(imageUrl) {
     google.script.run
-      .withSuccessHandler(function(result) {
-        if (loadingTimer) clearTimeout(loadingTimer);
-        renderItems(result);
+      .withSuccessHandler(function(resp) {
+        btn.disabled = false; btn.textContent = '+ 添加物品';
+        if (resp && resp.success) {
+          document.getElementById('addItemOverlay').classList.remove('show');
+          showToast('✅ 物品已添加: ' + name);
+        } else {
+          showToast('❌ ' + (resp ? resp.error : '添加失败'));
+        }
       })
       .withFailureHandler(function(err) {
-        if (loadingTimer) clearTimeout(loadingTimer);
-        document.getElementById('loadingDiv').innerHTML =
-          '<div style="color:var(--brand)">❌ 加载失败: ' + (err.message || err) + '</div>' +
-          '<button class="btn btn-sm btn-outline-danger mt-3" onclick="loadCheckItems()">重试</button>';
+        btn.disabled = false; btn.textContent = '+ 添加物品';
+        showToast('❌ ' + (err.message || err));
       })
-      .getTodayCheckItems(currentUser.name);
+      .createItem(currentUser.username, { name: name, category: cat, unit: unit, imageUrl: imageUrl || '' });
   }
 
-  function renderItems(result) {
-    document.getElementById('loadingDiv').style.display = 'none';
+  if (pendingPhotoBase64) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.success) {
+          doCreate(resp.url);
+        } else {
+          showToast('⚠️ 图片上传失败，物品仍将保存（无图）');
+          doCreate('');
+        }
+      })
+      .withFailureHandler(function() { doCreate(''); })
+      .uploadItemPhoto(currentUser.username, pendingPhotoBase64, pendingPhotoMime, pendingPhotoName);
+  } else {
+    doCreate('');
+  }
+}
 
-    if (!result.success) {
-      document.getElementById('loadingDiv').style.display = 'block';
-      document.getElementById('loadingDiv').innerHTML = '<div style="color:var(--brand)">❌ ' + result.error + '</div>';
-      return;
-    }
+function closeAddItemOverlayBg(evt) {
+  if (evt.target === document.getElementById('addItemOverlay')) {
+    closeAddItemOverlayDirect();
+  }
+}
+function closeAddItemOverlayDirect() {
+  document.getElementById('addItemOverlay').classList.remove('show');
+}
 
-    allItems = result.items;
-    updateProgress(result.todayChecked, result.todayTotal);
+// ══════════════════════════════════════════════
+// 初始化
+// ══════════════════════════════════════════════
+window.addEventListener('load', function() {
+  var stored = ssGet('ims_user') || lsGet('ims_user');
+  if (!stored) { goLogin(); return; }
+  try { currentUser = JSON.parse(stored); } catch(e) { goLogin(); return; }
 
-    var grouped = {}, catOrder = [];
-    for (var i = 0; i < allItems.length; i++) {
-      allItems[i]._idx = i;
-      var cat = allItems[i].category;
-      if (!grouped[cat]) { grouped[cat] = []; catOrder.push(cat); }
-      grouped[cat].push(allItems[i]);
-    }
-
-    var html = '';
-    for (var c = 0; c < catOrder.length; c++) {
-      var catName = catOrder[c];
-      var catItems = grouped[catName];
-      var icon = CATEGORY_ICONS[catName] || '📦';
-      var freqLabel = catItems[0].freq === 'daily' ? '每日' : catItems[0].freq === 'weekly' ? '每周' : '每3天';
-
-      html += '<div class="cat-header" onclick="toggleCat(this)">';
-      html += '<span class="cat-title">' + icon + ' ' + catName + ' <span class="cat-badge bg-light text-dark">' + freqLabel + '</span></span>';
-      html += '<span><span class="cat-badge" id="catCount_' + c + '">0/' + catItems.length + '</span> <i class="bi bi-chevron-down"></i></span>';
-      html += '</div>';
-      html += '<div class="cat-items" id="cat_' + c + '">';
-
-      for (var j = 0; j < catItems.length; j++) {
-        var item = catItems[j];
-        var itemIdx = item._idx;
-        html += '<div class="item-row" id="row_' + itemIdx + '">';
-        html += '<div class="item-name">' + item.name + '</div>';
-        html += '<div class="item-current">系统<br><strong>' + item.currentQty + '</strong></div>';
-        html += '<input type="number" class="item-input' + (item.checked ? ' checked' : '') + '" id="input_' + itemIdx + '" ';
-        html += 'inputmode="decimal" step="0.1" min="0" ';
-        if (item.checked) { html += 'value="' + item.currentQty + '" '; }
-        html += 'placeholder="—" ';
-        html += 'data-idx="' + itemIdx + '" data-cat="' + c + '" onchange="onItemInput(this)" oninput="onItemInput(this)">';
-        html += '<div class="item-unit">' + item.unit + '</div>';
-        html += '<div class="diff-badge" id="diff_' + itemIdx + '"></div>';
-        html += '</div>';
-      }
-      html += '</div>';
-    }
-
-    var skipped = result.skippedCategories || {};
-    for (var sk in skipped) {
-      html += '<div class="cat-header disabled">';
-      html += '<span class="cat-title">' + (CATEGORY_ICONS[sk] || '📦') + ' ' + sk + '</span>';
-      html += '<span style="font-size:12px">⏭ ' + skipped[sk].reason + '</span>';
-      html += '</div>';
-    }
-
-    document.getElementById('itemsList').innerHTML = html;
-    document.getElementById('itemsList').style.display = 'block';
-    document.getElementById('bottomBar').style.display = 'block';
-    updateFilledCount();
+  // 页面权限检查
+  var myPerms = parsePermissions(currentUser.permissions, currentUser.role);
+  if (myPerms.pages.indexOf('check') < 0) {
+    if (myPerms.pages.indexOf('dashboard') >= 0) { navigateTo('dashboard'); return; }
+    if (myPerms.pages.indexOf('admin') >= 0)     { navigateTo('admin');     return; }
+    goLogin(); return;
   }
 
-  function toggleCat(header) {
-    var items = header.nextElementSibling;
-    if (items) items.style.display = items.style.display === 'none' ? 'block' : 'none';
-    var icon = header.querySelector('.bi');
-    if (icon) icon.className = items.style.display === 'none' ? 'bi bi-chevron-right' : 'bi bi-chevron-down';
+  document.getElementById('staffLabel').textContent =
+    '👤 ' + (currentUser.name || currentUser.username);
+
+  // 显示「+ 物品」按钮（仅 Manager/Boss）
+  if (currentUser.role === 'Manager' || currentUser.role === 'Boss') {
+    document.getElementById('addItemFab').style.display    = 'flex';
+    document.getElementById('addItemTopBtn').style.display = '';
   }
 
-  function onItemInput(el) {
-    var idx = parseInt(el.dataset.idx);
-    var item = allItems[idx];
-    var newQty = parseFloat(el.value);
-    var diffEl = document.getElementById('diff_' + idx);
+  loadItems();
+});
 
-    if (isNaN(newQty) || el.value === '') {
-      el.className = 'item-input';
-      diffEl.innerHTML = '';
+// ══════════════════════════════════════════════
+// 加载物品
+// ══════════════════════════════════════════════
+function loadItems() {
+  showLoading('正在加载盘点物品...');
+  google.script.run
+    .withSuccessHandler(onItemsLoaded)
+    .withFailureHandler(function(err) {
+      showError('加载失败：' + (err.message || err));
+    })
+    .getTodayCheckItems(currentUser.username);
+}
+
+function onItemsLoaded(resp) {
+  if (!resp || !resp.success) {
+    showError(resp ? resp.error : '服务器无响应');
+    return;
+  }
+  allItems = resp.items || [];
+  if (allItems.length === 0) {
+    showEmpty('今日暂无分配给您的盘点任务');
+    updateProgress(0, 0);
+    return;
+  }
+  buildCatTabs();
+  renderItems(currentCat);
+  restoreDrafts();
+  updateFilledCount();
+  updateProgress(-1, -1);   // auto-calc
+  document.getElementById('statusArea').style.display = 'none';
+  document.getElementById('itemsList').style.display  = 'block';
+}
+
+// ══════════════════════════════════════════════
+// 状态显示
+// ══════════════════════════════════════════════
+function showLoading(msg) {
+  var el = document.getElementById('statusArea');
+  el.style.display = 'block';
+  document.getElementById('itemsList').style.display = 'none';
+  el.innerHTML = '<div class="spinner"></div><div>' + msg + '</div>';
+}
+function showError(msg) {
+  var el = document.getElementById('statusArea');
+  el.style.display = 'block';
+  document.getElementById('itemsList').style.display = 'none';
+  el.innerHTML = '<div style="font-size:36px;margin-bottom:12px">❌</div>' +
+    '<div style="color:#d32f2f;margin-bottom:16px">' + msg + '</div>' +
+    '<button onclick="loadItems()" style="padding:9px 20px;background:#d32f2f;color:#fff;' +
+    'border:none;border-radius:8px;font-size:14px;cursor:pointer">重试</button>';
+}
+function showEmpty(msg) {
+  var el = document.getElementById('statusArea');
+  el.style.display = 'block';
+  document.getElementById('itemsList').style.display = 'none';
+  el.innerHTML = '<div class="empty-state"><div class="icon">✅</div><div>' + msg + '</div></div>';
+}
+
+// ══════════════════════════════════════════════
+// 分类 Tab
+// ══════════════════════════════════════════════
+function buildCatTabs() {
+  var cats = ['全部'];
+  allItems.forEach(function(it) {
+    if (it.category && cats.indexOf(it.category) < 0) cats.push(it.category);
+  });
+  var wrap = document.getElementById('catTabs');
+  wrap.innerHTML = '';
+  cats.forEach(function(cat) {
+    var cnt = cat === '全部' ? allItems.length :
+      allItems.filter(function(i){ return i.category === cat; }).length;
+    var div = document.createElement('div');
+    div.className = 'cat-tab' + (cat === currentCat ? ' active' : '');
+    div.textContent = cat + ' (' + cnt + ')';
+    div.onclick = (function(c){ return function(){ switchCat(c); }; })(cat);
+    wrap.appendChild(div);
+  });
+}
+
+function switchCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(function(el) {
+    el.classList.toggle('active', el.textContent.indexOf(cat + ' ') === 0);
+  });
+  renderItems(cat);
+}
+
+// ══════════════════════════════════════════════
+// 渲染物品
+// ══════════════════════════════════════════════
+var CAT_EMOJI = {
+  '肉类':'🥩','菜类':'🥬','海鲜':'🦐','调料':'🧂','饮料':'🧃',
+  '主食':'🍚','蘸料':'🍲','油料':'🫙','冷冻':'❄️','干货':'🌾',
+  '丸子':'🍜','锅底':'🫕','消耗品':'🧻',
+  '甜品':'🍮','酒水':'🍺','小吃':'🥟','餐具':'🥄','其他':'📦'
+};
+function catEmoji(cat) { return CAT_EMOJI[cat] || '📦'; }
+
+function renderItems(cat) {
+  var list = cat === '全部' ? allItems :
+    allItems.filter(function(i){ return i.category === cat; });
+  var container = document.getElementById('itemsList');
+  container.innerHTML = '';
+  if (!list.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div>' +
+      '<div>该分类暂无物品</div></div>';
+    return;
+  }
+  list.forEach(function(item) { container.appendChild(makeCard(item)); });
+}
+
+function makeCard(item) {
+  var cur = Number(item.currentQty) || 0;
+  var min = Number(item.minStock)   || 0;
+  var max = Number(item.maxStock)   || 0;
+
+  // 股票状态
+  var sClass = cur < min ? 'stock-low' : (max > 0 && cur > max ? 'stock-high' : 'stock-ok');
+  var sLabel = min > 0 ? ' · 最低:' + min : '';
+  if (max > 0) sLabel += ' 最高:' + max;
+
+  // 卡片
+  var card = document.createElement('div');
+  card.className = 'item-card';
+  card.id = 'card_' + item.id;
+
+  // 图片
+  var photoDiv = document.createElement('div');
+  photoDiv.className = 'item-photo';
+  if (item.imageUrl && item.imageUrl.match(/^https?:\/\//)) {
+    var img = document.createElement('img');
+    img.src = item.imageUrl;
+    img.alt = item.name;
+    img.onerror = function() { photoDiv.textContent = catEmoji(item.category); };
+    photoDiv.appendChild(img);
+  } else {
+    photoDiv.textContent = catEmoji(item.category);
+  }
+
+  // 信息
+  var infoDiv = document.createElement('div');
+  infoDiv.className = 'item-info';
+  infoDiv.innerHTML =
+    '<div class="item-name">' + escHtml(item.name) + '</div>' +
+    '<div class="item-meta">' + escHtml(item.category || '') +
+      (item.supplier ? ' · ' + escHtml(item.supplier) : '') + '</div>' +
+    '<div class="item-stock">现有: <span class="' + sClass + '">' + cur + '</span> ' +
+      escHtml(item.unit || '') + sLabel + '</div>';
+
+  // 输入
+  var wrapDiv = document.createElement('div');
+  wrapDiv.className = 'item-input-wrap';
+
+  var qtyRow = document.createElement('div');
+  qtyRow.className = 'qty-row';
+
+  var input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'qty-input';
+  input.id = 'inp_' + item.id;
+  input.min = '0'; input.step = '1';
+  input.placeholder = '--';
+  input.addEventListener('input', (function(it){ return function(){ onInput(it, this); }; })(item));
+  input.addEventListener('focus', function(){ this.select(); });
+
+  var unitSpan = document.createElement('span');
+  unitSpan.className = 'qty-unit';
+  unitSpan.textContent = item.unit || '';
+
+  var diffDiv = document.createElement('div');
+  diffDiv.className = 'qty-diff';
+  diffDiv.id = 'diff_' + item.id;
+
+  qtyRow.appendChild(input);
+  qtyRow.appendChild(unitSpan);
+  wrapDiv.appendChild(qtyRow);
+  wrapDiv.appendChild(diffDiv);
+
+  card.appendChild(photoDiv);
+  card.appendChild(infoDiv);
+  card.appendChild(wrapDiv);
+  return card;
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════
+// 输入 & 草稿
+// ══════════════════════════════════════════════
+function onInput(item, el) {
+  var val = el.value.trim();
+  var diffEl = document.getElementById('diff_' + item.id);
+  var card   = document.getElementById('card_' + item.id);
+
+  if (val === '' || isNaN(Number(val))) {
+    diffEl.textContent = '';
+    el.classList.remove('filled');
+    card.classList.remove('has-input');
+    ssRemove(DRAFT_PFX + item.id);
+  } else {
+    var qty  = Number(val);
+    var diff = qty - (Number(item.currentQty) || 0);
+    diffEl.textContent = diff > 0 ? '+' + diff : (diff < 0 ? '' + diff : '±0');
+    diffEl.className   = 'qty-diff ' +
+      (diff > 0 ? 'diff-pos' : diff < 0 ? 'diff-neg' : 'diff-zero');
+    el.classList.add('filled');
+    card.classList.add('has-input');
+    ssSet(DRAFT_PFX + item.id, val);
+    document.getElementById('draftLabel').style.display = 'inline';
+  }
+  updateFilledCount();
+  updateProgress(-1, -1);
+}
+
+function restoreDrafts() {
+  var any = false;
+  allItems.forEach(function(item) {
+    var saved = ssGet(DRAFT_PFX + item.id);
+    if (saved !== null && saved !== '') {
+      var el = document.getElementById('inp_' + item.id);
+      if (el) { el.value = saved; onInput(item, el); any = true; }
+    }
+  });
+  if (any) document.getElementById('draftLabel').style.display = 'inline';
+}
+
+// ══════════════════════════════════════════════
+// 统计
+// ══════════════════════════════════════════════
+function countFilled() {
+  var n = 0;
+  allItems.forEach(function(it) {
+    var el = document.getElementById('inp_' + it.id);
+    if (el && el.value.trim() !== '' && !isNaN(Number(el.value))) n++;
+  });
+  return n;
+}
+
+function updateFilledCount() {
+  var total  = allItems.length;
+  var filled = countFilled();
+  document.getElementById('filledCount').textContent =
+    '已填: ' + filled + ' / ' + total;
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = (filled === 0);
+  if (filled > 0 && filled < total) {
+    btn.textContent = '提交盘点 (' + filled + '/' + total + ')';
+  } else if (filled === total && total > 0) {
+    btn.textContent = '✅ 全部填完，提交 (' + total + ')';
+  } else {
+    btn.textContent = '提交盘点记录';
+  }
+}
+
+function updateProgress(done, total) {
+  if (done < 0) { done = countFilled(); total = allItems.length; }
+  var pct = total > 0 ? Math.round(done / total * 100) : 0;
+  document.getElementById('progressText').textContent =
+    '盘点进度：' + done + ' / ' + total + ' 件';
+  document.getElementById('progressPct').textContent  = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ══════════════════════════════════════════════
+// 提交
+// ══════════════════════════════════════════════
+function confirmSubmit() {
+  var items = collectItems();
+  if (!items.length) { alert('请至少填写一件物品的数量'); return; }
+  var missing = allItems.length - items.length;
+  var msg = '已填写 <b>' + items.length + '</b> 件物品。';
+  if (missing > 0) msg += '<br>另有 <b>' + missing + '</b> 件未填写，将跳过。';
+  msg += '<br><br>确认提交本次盘点？';
+  showModal('📋', '确认提交', msg, [
+    { label: '确认提交', primary: true,  fn: doSubmit },
+    { label: '继续盘点', primary: false, fn: closeModal }
+  ]);
+}
+
+function collectItems() {
+  var arr = [];
+  allItems.forEach(function(it) {
+    var el = document.getElementById('inp_' + it.id);
+    if (el && el.value.trim() !== '' && !isNaN(Number(el.value))) {
+      arr.push({
+        itemId: it.id, name: it.name, category: it.category, unit: it.unit,
+        newQty: Number(el.value),
+        prevQty: Number(it.currentQty) || 0
+      });
+    }
+  });
+  return arr;
+}
+
+function doSubmit() {
+  closeModal();
+  var items = collectItems();
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 提交中...';
+
+  google.script.run
+    .withSuccessHandler(onSubmitDone)
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
       updateFilledCount();
-      return;
-    }
+      showModal('❌', '提交失败',
+        '错误：' + (err.message || err) + '<br>请检查网络后重试。', [
+        { label: '重试', primary: true,  fn: confirmSubmit },
+        { label: '取消', primary: false, fn: closeModal }
+      ]);
+    })
+    .submitCheckRecord(currentUser.name || currentUser.username, items);
+}
 
-    var diff = newQty - item.currentQty;
-    var diffPct = item.currentQty > 0 ? Math.abs(diff) / item.currentQty : 0;
-
-    if (diff > 0) diffEl.innerHTML = '<span class="badge bg-success">+' + diff + '</span>';
-    else if (diff < 0) diffEl.innerHTML = '<span class="badge bg-danger">' + diff + '</span>';
-    else diffEl.innerHTML = '<span class="badge bg-secondary">0</span>';
-
-    if (diffPct > 0.3) {
-      el.className = 'item-input warning';
-      diffEl.innerHTML += '<div style="font-size:10px;color:var(--orange)">⚠请确认</div>';
-    } else {
-      el.className = 'item-input checked';
-    }
-
-    if (newQty < item.minStock) {
-      diffEl.innerHTML += '<div style="font-size:10px;color:var(--brand)">📉低</div>';
-    }
+function onSubmitDone(resp) {
+  if (!resp || !resp.success) {
+    document.getElementById('submitBtn').disabled = false;
     updateFilledCount();
+    showModal('❌', '提交失败', resp ? resp.error : '服务器无响应', [
+      { label: '重试', primary: true,  fn: confirmSubmit },
+      { label: '取消', primary: false, fn: closeModal }
+    ]);
+    return;
   }
 
-  function updateFilledCount() {
-    filledCount = 0;
-    for (var i = 0; i < allItems.length; i++) {
-      var el = document.getElementById('input_' + i);
-      if (el && el.value !== '') filledCount++;
-    }
-    var btn = document.getElementById('btnSubmit');
-    btn.disabled = filledCount === 0;
-    document.getElementById('submitText').textContent = '✅ 提交盘点 (' + filledCount + '项)';
+  // 清草稿
+  ssClearPfx(DRAFT_PFX);
+  document.getElementById('draftLabel').style.display = 'none';
 
-    var catCounts = {};
-    for (var j = 0; j < allItems.length; j++) {
-      var el2 = document.getElementById('input_' + j);
-      var cat = el2 ? el2.dataset.cat : '';
-      if (!catCounts[cat]) catCounts[cat] = { filled: 0, total: 0 };
-      catCounts[cat].total++;
-      if (el2 && el2.value !== '') catCounts[cat].filled++;
-    }
-    for (var c in catCounts) {
-      var badge = document.getElementById('catCount_' + c);
-      if (badge) {
-        badge.textContent = catCounts[c].filled + '/' + catCounts[c].total;
-        badge.className = 'cat-badge ' + (catCounts[c].filled === catCounts[c].total ? 'bg-success text-white' : 'bg-light text-dark');
-      }
-    }
+  var saved   = resp.saved   || 0;
+  var abnormals = resp.abnormals || [];
+
+  if (abnormals.length > 0) {
+    var box = document.getElementById('modalBox');
+    var rows = abnormals.map(function(a) {
+      return '<div class="abnormal-item">⚠️ <b>' +
+        escHtml(a.name) + '</b>: ' + a.qty + (a.unit||'') +
+        ' (' + escHtml(a.reason) + ')</div>';
+    }).join('');
+    box.innerHTML =
+      '<div class="success-anim">✅</div>' +
+      '<div class="modal-title" style="margin-bottom:8px">提交成功！</div>' +
+      '<div class="modal-msg">已记录 <b>' + saved + '</b> 件物品。</div>' +
+      '<div style="font-size:13px;color:#e65100;font-weight:600;margin-bottom:6px">' +
+        '⚠️ 以下物品库存异常，已提醒管理员：</div>' +
+      '<div class="abnormal-list">' + rows + '</div>' +
+      '<button class="modal-btn modal-btn-primary" onclick="goLogin()">完成</button>';
+    document.getElementById('modalOverlay').classList.add('show');
+  } else {
+    showModal('', '提交成功！',
+      '已记录 <b>' + saved + '</b> 件盘点物品。今日任务完成！', [
+      { label: '完成', primary: true, fn: goLogin }
+    ], '🎉');
   }
+}
 
-  function updateProgress(done, total) {
-    var pct = total > 0 ? Math.round(done / total * 100) : 0;
-    document.getElementById('progressNum').textContent = done + '/' + total;
-    document.getElementById('progressBar').style.width = pct + '%';
-  }
+// ══════════════════════════════════════════════
+// 弹窗
+// ══════════════════════════════════════════════
+function showModal(icon, title, msg, btns, overrideIcon) {
+  var box = document.getElementById('modalBox');
+  var useIcon = overrideIcon || icon;
+  var html = '';
+  if (useIcon) html += '<div class="modal-icon">' + useIcon + '</div>';
+  html += '<div class="modal-title">' + title + '</div>';
+  if (msg) html += '<div class="modal-msg">' + msg + '</div>';
+  btns.forEach(function(b, i) {
+    html += '<button class="modal-btn ' +
+      (b.primary ? 'modal-btn-primary' : 'modal-btn-secondary') +
+      '" id="mbtn' + i + '">' + b.label + '</button>';
+  });
+  box.innerHTML = html;
+  btns.forEach(function(b, i) {
+    document.getElementById('mbtn' + i).onclick = b.fn;
+  });
+  document.getElementById('modalOverlay').classList.add('show');
+}
 
-  function submitCheck() {
-    var items = [];
-    for (var i = 0; i < allItems.length; i++) {
-      var el = document.getElementById('input_' + i);
-      if (el && el.value !== '') {
-        items.push({ itemId: allItems[i].id, newQty: parseFloat(el.value) });
-      }
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+// ══════════════════════════════════════════════
+// 导航
+// ══════════════════════════════════════════════
+function goLogin() {
+  google.script.run.withSuccessHandler(function(url) {
+    var a = document.createElement('a');
+    a.href = url + '?page=login';
+    a.target = '_top';
+    document.body.appendChild(a);
+    a.click();
+  }).getAppUrl();
+}
+
+function doLogout() {
+  var hasDraft = false;
+  try {
+    var keys = Object.keys(sessionStorage);
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i].indexOf(DRAFT_PFX) === 0) { hasDraft = true; break; }
     }
-    if (items.length === 0) return;
-    if (!confirm('确认提交 ' + items.length + ' 项盘点数据？')) return;
+  } catch(e) {}
 
-    document.getElementById('btnSubmit').disabled = true;
-    document.getElementById('submitText').textContent = '提交中...';
-    document.getElementById('submitSpinner').style.display = 'inline-block';
-
-    google.script.run
-      .withSuccessHandler(function(result) { showResult(result); })
-      .withFailureHandler(function(err) {
-        alert('提交失败: ' + (err.message || err));
-        document.getElementById('btnSubmit').disabled = false;
-        document.getElementById('submitText').textContent = '✅ 提交盘点 (' + filledCount + '项)';
-        document.getElementById('submitSpinner').style.display = 'none';
-      })
-      .submitCheckRecord(currentUser.name, items);
+  if (hasDraft) {
+    showModal('⚠️', '确认退出？',
+      '您有未提交的草稿数据。<br>退出后草稿将保留，下次进入此页面仍可继续。', [
+      { label: '退出登录', primary: false, fn: _doLogout },
+      { label: '继续盘点', primary: true,  fn: closeModal }
+    ]);
+  } else {
+    _doLogout();
   }
+}
 
-  function showResult(result) {
-    document.getElementById('itemsList').style.display = 'none';
-    document.getElementById('bottomBar').style.display = 'none';
-    document.getElementById('progressSection').style.display = 'none';
-
-    var html = '<div class="result-card text-center">';
-    if (result.success) {
-      html += '<div style="font-size:48px">✅</div>';
-      html += '<h5 class="mt-2">盘点完成!</h5>';
-      html += '<div class="text-muted mb-3">' + result.staffName + ' · ' + result.timestamp + '</div>';
-      html += '<div class="row g-2 mb-3">';
-      html += '<div class="col-6"><div class="p-2 bg-light rounded">📦 已更新<br><strong>' + result.updated + '项</strong></div></div>';
-      html += '<div class="col-6"><div class="p-2 ' + (result.lowStockCount > 0 ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10') + ' rounded">';
-      html += '📉 低库存<br><strong>' + result.lowStockCount + '项</strong></div></div>';
-      html += '</div>';
-
-      if (result.abnormalCount > 0) {
-        html += '<div class="alert alert-warning text-start" style="font-size:13px">';
-        html += '<strong>⚠ 异常差异 ' + result.abnormalCount + ' 项:</strong><br>';
-        for (var i = 0; i < result.abnormalItems.length; i++) {
-          var ab = result.abnormalItems[i];
-          html += ab.name + ': ' + ab.oldQty + '→' + ab.newQty + ' (' + ab.pct + '%)<br>';
-        }
-        html += '</div>';
-      }
-      if (result.lowStockCount > 0) {
-        html += '<div class="alert alert-danger text-start" style="font-size:13px">';
-        html += '<strong>📉 低库存物品:</strong><br>';
-        for (var j = 0; j < result.lowStockItems.length; j++) {
-          var ls = result.lowStockItems[j];
-          html += ls.name + ': ' + ls.qty + ls.unit + ' (最低' + ls.min + ')<br>';
-        }
-        html += '</div>';
-      }
-    } else {
-      html += '<div style="font-size:48px">❌</div>';
-      html += '<h5 class="mt-2">提交失败</h5>';
-      html += '<div class="text-muted">' + (result.error || '未知错误') + '</div>';
-    }
-    html += '<button class="btn btn-outline-danger mt-3" onclick="location.reload()">返回盘点</button>';
-    html += '</div>';
-
-    document.getElementById('resultDiv').innerHTML = html;
-    document.getElementById('resultDiv').style.display = 'block';
-  }
+function _doLogout() {
+  closeModal();
+  lsDel('ims_user');
+  ssRemove('ims_user');
+  goLogin();
+}
 </script>
-
 </body>
 </html>

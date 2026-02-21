@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>管理后台</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      background: #f5f5f5; color: #212121;
+      min-height: 100vh;
+    }
+
+    /* ── 顶栏 ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: #37474f; color: #fff;
+      padding: 12px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .topbar-title { font-size: 15px; font-weight: 700; }
+    .topbar-sub   { font-size: 11px; opacity: .8; margin-top: 2px; }
+    .nav-btn {
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.3);
+      color: #fff; padding: 6px 10px;
+      border-radius: 7px; font-size: 12px;
+      cursor: pointer; white-space: nowrap;
+    }
+
+    /* ── Tab 栏 ── */
+    .tab-bar {
+      display: flex; background: #fff;
+      border-bottom: 2px solid #e0e0e0;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; position: sticky; top: 52px; z-index: 90;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab {
+      flex: 0 0 auto; padding: 11px 16px;
+      font-size: 13px; color: #757575;
+      cursor: pointer; white-space: nowrap;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: all .2s;
+    }
+    .tab.active { color: #37474f; border-bottom-color: #37474f; font-weight: 600; }
+
+    /* ── 加载 ── */
+    .loading-area {
+      text-align: center; padding: 48px 24px; color: #9e9e9e;
+    }
+    .spinner {
+      width: 32px; height: 32px; margin: 0 auto 14px;
+      border: 3px solid #cfd8dc; border-top-color: #37474f;
+      border-radius: 50%; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 搜索框 ── */
+    .search-bar {
+      padding: 10px 14px; background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex; gap: 8px;
+    }
+    .search-input {
+      flex: 1; padding: 8px 12px;
+      border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 14px; outline: none;
+      background: #fafafa;
+    }
+    .search-input:focus { border-color: #37474f; }
+    .filter-select {
+      padding: 8px 10px;
+      border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 13px; background: #fafafa;
+      color: #212121; outline: none;
+    }
+
+    /* ── 物品列表 ── */
+    .item-row {
+      background: #fff; padding: 12px 14px;
+      border-bottom: 1px solid #f5f5f5;
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer;
+    }
+    .item-row:active { background: #eceff1; }
+    .item-thumb {
+      width: 44px; height: 44px; border-radius: 7px;
+      background: #f5f5f5; overflow: hidden; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .item-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .ir-info { flex: 1; min-width: 0; }
+    .ir-name { font-size: 13px; font-weight: 600; }
+    .ir-meta { font-size: 11px; color: #9e9e9e; margin-top: 2px; }
+    .ir-right { text-align: right; flex-shrink: 0; }
+    .ir-qty { font-size: 15px; font-weight: 700; }
+    .ir-range { font-size: 10px; color: #bbb; }
+    .status-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; margin-right: 4px;
+    }
+    .dot-low  { background: #d32f2f; }
+    .dot-high { background: #ff9800; }
+    .dot-ok   { background: #388e3c; }
+
+    /* ── 员工分配 ── */
+    .staff-card {
+      background: #fff; margin: 8px 12px;
+      border-radius: 10px; padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .sc-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .sc-name { font-size: 14px; font-weight: 600; }
+    .sc-role { font-size: 11px; color: #9e9e9e; margin-top: 2px; }
+    .edit-btn {
+      padding: 5px 12px; border: 1.5px solid #37474f;
+      border-radius: 6px; background: #fff; color: #37474f;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .cat-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      display: inline-block; padding: 3px 10px;
+      border-radius: 12px; font-size: 11px; font-weight: 500;
+    }
+    .chip-active   { background: #cfd8dc; color: #263238; }
+    .chip-all      { background: #e8f5e9; color: #1b5e20; }
+    .chip-inactive { background: #f5f5f5; color: #bdbdbd; }
+
+    /* ── 历史记录 ── */
+    .hist-card {
+      background: #fff; padding: 12px 14px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .hc-date { font-size: 13px; font-weight: 600; }
+    .hc-meta { font-size: 11px; color: #9e9e9e; margin-top: 3px; }
+    .hc-badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 10px; font-size: 11px; font-weight: 600;
+      margin-left: 6px;
+    }
+    .badge-warn { background: #fbe9e7; color: #d32f2f; }
+    .badge-ok   { background: #e8f5e9; color: #388e3c; }
+
+    /* ── 采购单 ── */
+    .po-card {
+      background: #fff; margin: 8px 12px;
+      border-radius: 10px; padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .po-header {
+      display: flex; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .po-id { font-size: 13px; font-weight: 700; }
+    .po-date { font-size: 11px; color: #9e9e9e; }
+    .po-items { font-size: 12px; color: #616161; margin-bottom: 8px; }
+    .po-footer {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .po-cost { font-size: 14px; font-weight: 700; color: #1565c0; }
+    .status-badge {
+      display: inline-block; padding: 4px 10px;
+      border-radius: 12px; font-size: 11px; font-weight: 600;
+    }
+    .sb-pending  { background: #fff3e0; color: #e65100; }
+    .sb-ordered  { background: #e3f2fd; color: #1565c0; }
+    .sb-arrived  { background: #e8f5e9; color: #1b5e20; }
+    .po-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .po-btn {
+      flex: 1; padding: 8px; border: none; border-radius: 7px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .po-btn-order   { background: #e3f2fd; color: #1565c0; }
+    .po-btn-arrive  { background: #e8f5e9; color: #1b5e20; }
+    .po-btn-done    { background: #f5f5f5; color: #bdbdbd; cursor: default; }
+
+    /* ── 编辑弹窗 ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.55);
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-sheet {
+      background: #fff; border-radius: 16px 16px 0 0;
+      width: 100%; max-width: 520px;
+      padding: 20px 20px 30px;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-handle {
+      width: 40px; height: 4px; background: #e0e0e0;
+      border-radius: 2px; margin: 0 auto 16px;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: #757575; margin-bottom: 4px; display: block; }
+    .form-input {
+      width: 100%; padding: 9px 12px;
+      border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 14px; outline: none; background: #fafafa;
+    }
+    .form-input:focus { border-color: #37474f; background: #fff; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-group { flex: 1; }
+    .save-btn {
+      width: 100%; padding: 13px; border: none;
+      border-radius: 10px; background: #37474f; color: #fff;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      margin-top: 6px;
+    }
+    .cancel-btn {
+      width: 100%; padding: 12px; border: none;
+      border-radius: 10px; background: #f5f5f5; color: #757575;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      margin-top: 6px;
+    }
+
+    /* 编辑物品照片区 */
+    .edit-photo-area {
+      width: 100%; height: 110px;
+      border: 2px dashed #bdbdbd; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 6px;
+      cursor: pointer; margin-bottom: 14px;
+      background: #fafafa; overflow: hidden; position: relative;
+    }
+    .edit-photo-area img {
+      width: 100%; height: 100%; object-fit: cover; border-radius: 10px;
+    }
+    .edit-photo-label { font-size: 12px; color: #757575; }
+
+    /* 分类多选 */
+    .cat-select-wrap {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;
+    }
+    .perm-chip, .perm-tab-chip {
+      padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1.5px solid #e0e0e0;
+      background: #fafafa; color: #757575; transition: all .15s;
+      display: inline-block; margin: 3px;
+    }
+    .perm-chip.selected     { background: #37474f; color: #fff; border-color: #37474f; }
+    .perm-tab-chip.selected { background: #546e7a; color: #fff; border-color: #546e7a; }
+    .cat-check-chip {
+      padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1.5px solid #e0e0e0;
+      background: #fafafa; color: #757575;
+      transition: all .15s;
+    }
+    .cat-check-chip.selected {
+      background: #37474f; color: #fff; border-color: #37474f;
+    }
+
+    /* ── 空状态 / 提示 ── */
+    .empty-state {
+      text-align: center; padding: 48px 24px;
+      color: #9e9e9e; font-size: 13px;
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #323232; color: #fff;
+      padding: 10px 20px; border-radius: 8px;
+      font-size: 13px; z-index: 300;
+      animation: fadeUp .3s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<div class="topbar">
+  <div>
+    <div class="topbar-title">⚙️ 管理后台</div>
+    <div class="topbar-sub" id="userLabel">管理员</div>
+  </div>
+  <div style="display:flex;gap:6px">
+    <button class="nav-btn" onclick="navigateTo('dashboard')">← 看板</button>
+    <button class="nav-btn" onclick="doLogout()">退出</button>
+  </div>
+</div>
+
+<!-- Tab 栏 -->
+<div class="tab-bar">
+  <div class="tab active" id="tab0" onclick="switchTab(0)">📦 库存总览</div>
+  <div class="tab"        id="tab1" onclick="switchTab(1)">👥 盘点分配</div>
+  <div class="tab"        id="tab2" onclick="switchTab(2)">📅 盘点历史</div>
+  <div class="tab"        id="tab3" onclick="switchTab(3)">🛒 采购单</div>
+  <div class="tab"        id="tab4" onclick="switchTab(4)">👤 账号管理</div>
+</div>
+
+<!-- ── Tab 0: 库存总览 ── -->
+<div id="panel0">
+  <div class="search-bar">
+    <input class="search-input" type="search" id="itemSearch" placeholder="搜索物品名称..."
+      oninput="filterItems()">
+    <select class="filter-select" id="itemCatFilter" onchange="filterItems()">
+      <option value="">全部分类</option>
+    </select>
+  </div>
+  <div id="itemListArea">
+    <div class="loading-area"><div class="spinner"></div><div>加载中...</div></div>
+  </div>
+</div>
+
+<!-- ── Tab 1: 盘点分配 ── -->
+<div id="panel1" style="display:none">
+  <div id="staffListArea">
+    <div class="loading-area"><div class="spinner"></div><div>加载中...</div></div>
+  </div>
+</div>
+
+<!-- ── Tab 2: 盘点历史 ── -->
+<div id="panel2" style="display:none">
+  <div id="histArea">
+    <div class="loading-area"><div class="spinner"></div><div>加载中...</div></div>
+  </div>
+</div>
+
+<!-- ── Tab 3: 采购单 ── -->
+<div id="panel3" style="display:none">
+  <div id="poArea">
+    <div class="loading-area"><div class="spinner"></div><div>加载中...</div></div>
+  </div>
+</div>
+
+<!-- ── Tab 4: 账号管理 ── -->
+<div id="panel4" style="display:none">
+  <div id="acctArea">
+    <div class="loading-area"><div class="spinner"></div><div>加载中...</div></div>
+  </div>
+</div>
+
+<!-- ── 编辑物品弹窗 ── -->
+<div class="modal-overlay" id="editOverlay" onclick="closeModal(event)">
+  <div class="modal-sheet" id="editSheet" style="max-height:92vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="editTitle">编辑物品</div>
+    <div id="editForm"></div>
+    <!-- 隐藏的照片 input（在 modal 外防止滚动层级问题） -->
+    <input type="file" id="editPhotoInput" accept="image/*" capture="environment"
+           style="display:none" onchange="onEditPhotoSelected(this)">
+  </div>
+</div>
+
+<!-- ── 账号编辑弹窗 ── -->
+<div class="modal-overlay" id="acctOverlay" onclick="closeAcctModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="acctModalTitle">账号</div>
+    <div id="acctForm"></div>
+  </div>
+</div>
+
+<!-- ── 分配编辑弹窗 ── -->
+<div class="modal-overlay" id="assignOverlay" onclick="closeAssignModal(event)">
+  <div class="modal-sheet" id="assignSheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="assignTitle">编辑分配分类</div>
+    <div id="assignForm"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// Storage 辅助
+// ══════════════════════════════════════════════
+function lsGet(k)  { try { return localStorage.getItem(k);  } catch(e){ return null; } }
+function lsDel(k)  { try { localStorage.removeItem(k);      } catch(e){} }
+function ssGet(k)  { try { return sessionStorage.getItem(k); } catch(e){ return null; } }
+
+function escH(s){ return String(s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── 页面权限辅助 ──
+var ROLE_DEFAULT_PERMS = {
+  'Boss':    { pages: ['check','dashboard','admin'], adminTabs: [0,1,2,3,4] },
+  'Manager': { pages: ['dashboard','admin'],         adminTabs: [0,1,2,3]   },
+  'Staff':   { pages: ['check'],                     adminTabs: []           }
+};
+function parsePermissions(permStr, role) {
+  try { var p = JSON.parse(permStr); if (p && Array.isArray(p.pages)) return p; } catch(e) {}
+  return ROLE_DEFAULT_PERMS[role] || { pages: ['check'], adminTabs: [] };
+}
+
+// ══════════════════════════════════════════════
+// 全局
+// ══════════════════════════════════════════════
+var currentUser  = null;
+var allItemsData = [];
+var staffData    = [];
+var histData     = [];
+var poData       = [];
+var allCats      = [];
+var currentTab   = 0;
+
+var loaded = { items: false, staff: false, hist: false, po: false, acct: false };
+
+var CAT_EMOJI = {
+  '肉类':'🥩','菜类':'🥬','海鲜':'🦐','调料':'🧂','饮料':'🧃',
+  '主食':'🍚','蘸料':'🍲','油料':'🫙','冷冻':'❄️','干货':'🌾',
+  '丸子':'🍜','锅底':'🫕','消耗品':'🧻'
+};
+function cEmoji(cat){ return CAT_EMOJI[cat] || '📦'; }
+
+// ══════════════════════════════════════════════
+// 初始化
+// ══════════════════════════════════════════════
+window.addEventListener('load', function() {
+  var stored = ssGet('ims_user') || lsGet('ims_user');
+  if (!stored) { navigateTo('login'); return; }
+  try { currentUser = JSON.parse(stored); } catch(e) { navigateTo('login'); return; }
+
+  if (!currentUser) { navigateTo('login'); return; }
+
+  // 权限检查：需要有 admin 页面权限
+  var myPerms = parsePermissions(currentUser.permissions, currentUser.role);
+  if (myPerms.pages.indexOf('admin') < 0) {
+    alert('权限不足，此账号无法访问管理后台');
+    if (myPerms.pages.indexOf('dashboard') >= 0) { navigateTo('dashboard'); return; }
+    navigateTo('check'); return;
+  }
+
+  document.getElementById('userLabel').textContent =
+    '👤 ' + (currentUser.name || currentUser.username) + ' · ' + currentUser.role;
+
+  // Boss 保底拥有全部 tabs；其他用户根据 adminTabs 显示
+  var allowedTabs = (currentUser.role === 'Boss') ? [0,1,2,3,4] : (myPerms.adminTabs || []);
+  var firstTab = -1;
+  for (var t = 0; t < 5; t++) {
+    var show = allowedTabs.indexOf(t) >= 0;
+    document.getElementById('tab' + t).style.display = show ? '' : 'none';
+    document.getElementById('panel' + t).style.display = 'none'; // switchTab will set the active one
+    if (show && firstTab < 0) firstTab = t;
+  }
+  if (firstTab >= 0) {
+    switchTab(firstTab);
+  } else {
+    navigateTo('dashboard');
+  }
+});
+
+// ══════════════════════════════════════════════
+// Tab 切换
+// ══════════════════════════════════════════════
+function switchTab(idx) {
+  currentTab = idx;
+  for (var i = 0; i < 5; i++) {
+    document.getElementById('tab' + i).classList.toggle('active', i === idx);
+    document.getElementById('panel' + i).style.display = i === idx ? 'block' : 'none';
+  }
+  loadTabData(idx);
+}
+
+function loadTabData(idx) {
+  if (idx === 0 && !loaded.items)  { loadItems();  return; }
+  if (idx === 1 && !loaded.staff)  { loadStaff();  return; }
+  if (idx === 2 && !loaded.hist)   { loadHist();   return; }
+  if (idx === 3 && !loaded.po)     { loadPO();     return; }
+  if (idx === 4 && !loaded.acct)   { loadAcct();   return; }
+}
+
+// ══════════════════════════════════════════════
+// Tab 0: 库存总览
+// ══════════════════════════════════════════════
+function loadItems() {
+  document.getElementById('itemListArea').innerHTML =
+    '<div class="loading-area"><div class="spinner"></div><div>加载物品...</div></div>';
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      if (!resp || !resp.success) {
+        document.getElementById('itemListArea').innerHTML =
+          '<div class="empty-state"><div class="icon">❌</div><div>' + (resp?resp.error:'失败') + '</div></div>';
+        return;
+      }
+      allItemsData = resp.items || [];
+      loaded.items = true;
+
+      // 建分类下拉
+      var cats = [];
+      allItemsData.forEach(function(it) {
+        if (it.category && cats.indexOf(it.category) < 0) cats.push(it.category);
+      });
+      allCats = cats;
+      var sel = document.getElementById('itemCatFilter');
+      sel.innerHTML = '<option value="">全部分类</option>';
+      cats.forEach(function(c) {
+        sel.innerHTML += '<option value="' + escH(c) + '">' + escH(c) + '</option>';
+      });
+
+      renderItems(allItemsData);
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('itemListArea').innerHTML =
+        '<div class="empty-state"><div class="icon">❌</div><div>' + (err.message||err) + '</div></div>';
+    })
+    .getItemsForAdmin(currentUser.username);
+}
+
+function filterItems() {
+  var query = document.getElementById('itemSearch').value.trim().toLowerCase();
+  var cat   = document.getElementById('itemCatFilter').value;
+  var list  = allItemsData.filter(function(it) {
+    var matchQ = !query || it.name.toLowerCase().indexOf(query) >= 0;
+    var matchC = !cat   || it.category === cat;
+    return matchQ && matchC;
+  });
+  renderItems(list);
+}
+
+function renderItems(list) {
+  if (!list.length) {
+    document.getElementById('itemListArea').innerHTML =
+      '<div class="empty-state"><div class="icon">📭</div><div>无匹配物品</div></div>';
+    return;
+  }
+  var html = '';
+  list.forEach(function(it) {
+    var cur = Number(it.currentQty) || 0;
+    var min = Number(it.minStock)   || 0;
+    var max = Number(it.maxStock)   || 0;
+    var dotCls = cur < min && min > 0 ? 'dot-low' :
+                 cur > max && max > 0 ? 'dot-high' : 'dot-ok';
+
+    var imgHtml = it.imageUrl && it.imageUrl.match(/^https?:\/\//)
+      ? '<img src="' + escH(it.imageUrl) + '" alt="" onerror="this.parentNode.textContent=\'' + cEmoji(it.category) + '\'">'
+      : cEmoji(it.category);
+
+    html += '<div class="item-row" onclick="openEditItem(' + JSON.stringify(it).replace(/"/g,'&quot;') + ')">' +
+      '<div class="item-thumb">' + imgHtml + '</div>' +
+      '<div class="ir-info">' +
+        '<div class="ir-name"><span class="status-dot ' + dotCls + '"></span>' + escH(it.name) + '</div>' +
+        '<div class="ir-meta">' + escH(it.category||'') +
+          (it.supplier ? ' · ' + escH(it.supplier) : '') + '</div>' +
+      '</div>' +
+      '<div class="ir-right">' +
+        '<div class="ir-qty">' + cur + ' ' + escH(it.unit||'') + '</div>' +
+        '<div class="ir-range">' + min + '~' + max + '</div>' +
+      '</div></div>';
+  });
+  document.getElementById('itemListArea').innerHTML = html;
+}
+
+var editingItem          = null;
+var editPendingPhotoBase64 = null;
+var editPendingPhotoMime   = null;
+var editPendingPhotoName   = null;
+var EDIT_DEFAULT_CATS = [
+  '肉类','菜类','海鲜','调料','饮料','主食',
+  '蘸料','油料','冷冻','干货','丸子','锅底',
+  '甜品','酒水','小吃','消耗品','餐具','其他'
+];
+
+function openEditItem(item) {
+  editingItem = item;
+  editPendingPhotoBase64 = null; editPendingPhotoMime = null; editPendingPhotoName = null;
+  document.getElementById('editTitle').textContent = '编辑 · ' + item.name;
+
+  // 构建类别 option HTML
+  var catOptions = EDIT_DEFAULT_CATS.map(function(c) {
+    return '<option value="' + c + '"' + (item.category === c ? ' selected' : '') + '>' + c + '</option>';
+  }).join('');
+  // 若当前类别不在默认列表，追加
+  if (item.category && EDIT_DEFAULT_CATS.indexOf(item.category) < 0) {
+    catOptions = '<option value="' + escH(item.category) + '" selected>' + escH(item.category) + '</option>' + catOptions;
+  }
+
+  // 照片区 HTML
+  var photoAreaHtml;
+  if (item.imageUrl && item.imageUrl.match(/^https?:\/\//)) {
+    photoAreaHtml =
+      '<div class="edit-photo-area" onclick="triggerEditPhotoInput()">' +
+        '<img id="editPhotoPreview" src="' + escH(item.imageUrl) + '" onerror="this.style.display=\'none\';document.getElementById(\'editPhotoLabel\').style.display=\'\';">' +
+        '<div class="edit-photo-label" id="editPhotoLabel" style="display:none">📷 点击更换照片</div>' +
+      '</div>';
+  } else {
+    photoAreaHtml =
+      '<div class="edit-photo-area" onclick="triggerEditPhotoInput()">' +
+        '<img id="editPhotoPreview" style="display:none">' +
+        '<div class="edit-photo-label" id="editPhotoLabel">📷 点击更换照片</div>' +
+      '</div>';
+  }
+
+  document.getElementById('editForm').innerHTML =
+    photoAreaHtml +
+    '<div class="form-group">' +
+      '<label class="form-label">物品名称</label>' +
+      '<input class="form-input" type="text" id="ef_name" value="' + escH(item.name||'') + '">' +
+    '</div>' +
+    '<div class="form-group">' +
+      '<label class="form-label">类别</label>' +
+      '<select class="form-input" id="ef_cat">' + catOptions + '</select>' +
+    '</div>' +
+    '<div class="form-row">' +
+      '<div class="form-group">' +
+        '<label class="form-label">最低库存</label>' +
+        '<input class="form-input" type="number" id="ef_min" value="' + (item.minStock||0) + '" min="0">' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label class="form-label">最高库存</label>' +
+        '<input class="form-input" type="number" id="ef_max" value="' + (item.maxStock||0) + '" min="0">' +
+      '</div>' +
+    '</div>' +
+    '<div class="form-row">' +
+      '<div class="form-group">' +
+        '<label class="form-label">单价 (RM)</label>' +
+        '<input class="form-input" type="number" id="ef_price" value="' + (item.price||0) + '" min="0" step="0.01">' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label class="form-label">盘点频率</label>' +
+        '<select class="form-input" id="ef_freq">' +
+          ['每日','每周','每两周','每月'].map(function(f) {
+            return '<option value="' + f + '"' + (item.freq === f ? ' selected' : '') + '>' + f + '</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+    '</div>' +
+    '<div class="form-group">' +
+      '<label class="form-label">供应商</label>' +
+      '<input class="form-input" type="text" id="ef_supplier" value="' + escH(item.supplier||'') + '">' +
+    '</div>' +
+    '<div class="form-group">' +
+      '<label class="form-label">状态</label>' +
+      '<select class="form-input" id="ef_status">' +
+        ['Active','Inactive'].map(function(s) {
+          return '<option value="' + s + '"' + (item.status === s ? ' selected' : '') + '>' + s + '</option>';
+        }).join('') +
+      '</select>' +
+    '</div>' +
+    '<button class="save-btn" id="editSaveBtn" onclick="saveItem()">💾 保存</button>' +
+    '<button class="cancel-btn" onclick="closeEditModal()">取消</button>';
+
+  document.getElementById('editOverlay').classList.add('show');
+}
+
+function triggerEditPhotoInput() {
+  document.getElementById('editPhotoInput').click();
+}
+
+function onEditPhotoSelected(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var MAX = 800, w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else       { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var compressed = canvas.toDataURL('image/jpeg', 0.7);
+      editPendingPhotoBase64 = compressed.split(',')[1];
+      editPendingPhotoMime   = 'image/jpeg';
+      editPendingPhotoName   = 'item_' + Date.now() + '.jpg';
+      var preview = document.getElementById('editPhotoPreview');
+      if (preview) {
+        preview.src = compressed;
+        preview.style.display = 'block';
+        var lbl = document.getElementById('editPhotoLabel');
+        if (lbl) lbl.style.display = 'none';
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveItem() {
+  if (!editingItem) return;
+  var saveBtn = document.getElementById('editSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = '⏳ 保存中...';
+
+  var fields = {
+    name:      document.getElementById('ef_name').value.trim(),
+    category:  document.getElementById('ef_cat').value,
+    minStock:  Number(document.getElementById('ef_min').value)   || 0,
+    maxStock:  Number(document.getElementById('ef_max').value)   || 0,
+    price:     Number(document.getElementById('ef_price').value) || 0,
+    freq:      document.getElementById('ef_freq').value,
+    supplier:  document.getElementById('ef_supplier').value.trim(),
+    status:    document.getElementById('ef_status').value,
+    imageUrl:  editingItem.imageUrl || ''
+  };
+
+  function doUpdate(imageUrl) {
+    fields.imageUrl = imageUrl;
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        saveBtn.disabled = false; saveBtn.textContent = '💾 保存';
+        closeEditModal();
+        if (resp && resp.success) {
+          showToast('✅ 已保存');
+          loaded.items = false;
+          loadItems();
+        } else {
+          showToast('❌ ' + (resp ? resp.error : '保存失败'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        saveBtn.disabled = false; saveBtn.textContent = '💾 保存';
+        closeEditModal();
+        showToast('❌ ' + (err.message||err));
+      })
+      .updateItem(currentUser.username, editingItem.id, fields);
+  }
+
+  if (editPendingPhotoBase64) {
+    google.script.run
+      .withSuccessHandler(function(resp) {
+        if (resp && resp.success) {
+          doUpdate(resp.url);
+        } else {
+          showToast('⚠️ 图片上传失败，其他改动仍将保存');
+          doUpdate(editingItem.imageUrl || '');
+        }
+      })
+      .withFailureHandler(function() {
+        doUpdate(editingItem.imageUrl || '');
+      })
+      .uploadItemPhoto(currentUser.username, editPendingPhotoBase64, editPendingPhotoMime, editPendingPhotoName);
+  } else {
+    doUpdate(editingItem.imageUrl || '');
+  }
+}
+
+function closeEditModal() {
+  document.getElementById('editOverlay').classList.remove('show');
+  editingItem = null;
+  editPendingPhotoBase64 = null; editPendingPhotoMime = null; editPendingPhotoName = null;
+}
+function closeModal(evt) {
+  if (evt && evt.target === document.getElementById('editOverlay')) closeEditModal();
+}
+
+// ══════════════════════════════════════════════
+// Tab 1: 盘点分配
+// ══════════════════════════════════════════════
+function loadStaff() {
+  document.getElementById('staffListArea').innerHTML =
+    '<div class="loading-area"><div class="spinner"></div><div>加载员工...</div></div>';
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      if (!resp || !resp.success) {
+        document.getElementById('staffListArea').innerHTML =
+          '<div class="empty-state"><div class="icon">❌</div><div>' + (resp?resp.error:'失败') + '</div></div>';
+        return;
+      }
+      staffData = resp.staff || [];
+      loaded.staff = true;
+      renderStaff();
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('staffListArea').innerHTML =
+        '<div class="empty-state"><div class="icon">❌</div><div>' + (err.message||err) + '</div></div>';
+    })
+    .getStaffList(currentUser.username);
+}
+
+function renderStaff() {
+  if (!staffData.length) {
+    document.getElementById('staffListArea').innerHTML =
+      '<div class="empty-state"><div class="icon">👥</div><div>暂无员工数据</div></div>';
+    return;
+  }
+
+  // 用已加载的分类（若无，临时显示基础分类）
+  var cats = allCats.length ? allCats :
+    ['肉类','菜类','海鲜','调料','饮料','主食','蘸料','油料','冷冻','干货'];
+
+  var html = '<div style="padding:10px 12px 4px;font-size:12px;color:#9e9e9e">点击"编辑"设置员工负责的盘点分类。空=负责全部。</div>';
+  staffData.forEach(function(staff) {
+    var cats = staff.assignedCats ? staff.assignedCats.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+    var chipHtml = cats.length === 0
+      ? '<span class="chip chip-all">全部分类</span>'
+      : cats.map(function(c){ return '<span class="chip chip-active">' + cEmoji(c) + ' ' + escH(c) + '</span>'; }).join('');
+
+    html += '<div class="staff-card">' +
+      '<div class="sc-header">' +
+        '<div><div class="sc-name">' + escH(staff.name || staff.username) + '</div>' +
+          '<div class="sc-role">' + escH(staff.role) + ' · @' + escH(staff.username) + '</div></div>' +
+        '<button class="edit-btn" onclick="openAssignModal(\'' + escH(staff.username) + '\',\'' + escH(staff.assignedCats||'') + '\')">编辑</button>' +
+      '</div>' +
+      '<div class="cat-chips">' + chipHtml + '</div>' +
+    '</div>';
+  });
+  document.getElementById('staffListArea').innerHTML = html;
+}
+
+var editingStaff = null;
+var selectedCats = [];
+
+function openAssignModal(username, assignedCats) {
+  editingStaff = username;
+  selectedCats = assignedCats ? assignedCats.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+
+  var cats = allCats.length ? allCats :
+    ['肉类','菜类','海鲜','调料','饮料','主食','蘸料','油料','冷冻','干货'];
+
+  var staff = staffData.find(function(s){ return s.username === username; });
+  document.getElementById('assignTitle').textContent =
+    '编辑分配 · ' + (staff ? (staff.name || staff.username) : username);
+
+  var chips = cats.map(function(c) {
+    var sel = selectedCats.indexOf(c) >= 0;
+    return '<div class="cat-check-chip' + (sel ? ' selected' : '') + '" ' +
+      'data-cat="' + escH(c) + '" onclick="toggleCatChip(this)">' +
+      cEmoji(c) + ' ' + escH(c) + '</div>';
+  }).join('');
+
+  document.getElementById('assignForm').innerHTML =
+    '<div style="font-size:12px;color:#9e9e9e;margin-bottom:10px">选择分类（不选 = 负责全部）</div>' +
+    '<div class="cat-select-wrap" id="catSelectWrap">' + chips + '</div>' +
+    '<button class="save-btn" onclick="saveAssignment()" style="margin-top:16px">💾 保存分配</button>' +
+    '<button class="cancel-btn" onclick="closeAssignModal()">取消</button>';
+
+  document.getElementById('assignOverlay').classList.add('show');
+}
+
+function toggleCatChip(el) {
+  el.classList.toggle('selected');
+  var cat = el.getAttribute('data-cat');
+  var idx = selectedCats.indexOf(cat);
+  if (idx >= 0) selectedCats.splice(idx, 1);
+  else selectedCats.push(cat);
+}
+
+function saveAssignment() {
+  var cats = [];
+  document.querySelectorAll('#catSelectWrap .selected').forEach(function(el) {
+    cats.push(el.getAttribute('data-cat'));
+  });
+  var catsStr = cats.join(',');
+
+  var btn = document.querySelector('#assignForm .save-btn');
+  btn.disabled = true; btn.textContent = '⏳ 保存中...';
+
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      closeAssignModal();
+      if (resp && resp.success) {
+        showToast('✅ 分配已更新');
+        loaded.staff = false;
+        loadStaff();
+      } else {
+        showToast('❌ ' + (resp ? resp.error : '保存失败'));
+      }
+    })
+    .withFailureHandler(function(err) {
+      closeAssignModal();
+      showToast('❌ ' + (err.message||err));
+    })
+    .updateStaffAssignment(currentUser.username, editingStaff, catsStr);
+}
+
+function closeAssignModal(evt) {
+  if (evt && evt.target !== document.getElementById('assignOverlay')) return;
+  document.getElementById('assignOverlay').classList.remove('show');
+  editingStaff = null;
+}
+
+// ══════════════════════════════════════════════
+// Tab 2: 盘点历史
+// ══════════════════════════════════════════════
+function loadHist() {
+  document.getElementById('histArea').innerHTML =
+    '<div class="loading-area"><div class="spinner"></div><div>加载历史...</div></div>';
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      if (!resp || !resp.success) {
+        document.getElementById('histArea').innerHTML =
+          '<div class="empty-state"><div class="icon">❌</div><div>' + (resp?resp.error:'失败') + '</div></div>';
+        return;
+      }
+      histData = resp.history || [];
+      loaded.hist = true;
+      renderHist();
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('histArea').innerHTML =
+        '<div class="empty-state"><div class="icon">❌</div><div>' + (err.message||err) + '</div></div>';
+    })
+    .getRecentCheckHistory(30);
+}
+
+function renderHist() {
+  if (!histData.length) {
+    document.getElementById('histArea').innerHTML =
+      '<div class="empty-state"><div class="icon">📅</div><div>最近30天无盘点记录</div></div>';
+    return;
+  }
+  var html = '';
+  histData.forEach(function(h) {
+    var badge = h.abnormalCount > 0
+      ? '<span class="hc-badge badge-warn">⚠️ 异常 ' + h.abnormalCount + '</span>'
+      : '<span class="hc-badge badge-ok">✅ 正常</span>';
+    html += '<div class="hist-card">' +
+      '<div class="hc-date">' + escH(h.date) + badge + '</div>' +
+      '<div class="hc-meta">盘点 ' + h.itemCount + ' 件 · ' + escH(h.staffName||'--') +
+        (h.lowStockCount > 0 ? ' · 🔴低库存 ' + h.lowStockCount : '') +
+        (h.highStockCount > 0 ? ' · 🟡高库存 ' + h.highStockCount : '') +
+      '</div></div>';
+  });
+  document.getElementById('histArea').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// Tab 3: 采购单
+// ══════════════════════════════════════════════
+function loadPO() {
+  document.getElementById('poArea').innerHTML =
+    '<div class="loading-area"><div class="spinner"></div><div>加载采购单...</div></div>';
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      if (!resp || !resp.success) {
+        document.getElementById('poArea').innerHTML =
+          '<div class="empty-state"><div class="icon">❌</div><div>' + (resp?resp.error:'失败') + '</div></div>';
+        return;
+      }
+      poData = resp.orders || [];
+      loaded.po = true;
+      renderPO();
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('poArea').innerHTML =
+        '<div class="empty-state"><div class="icon">❌</div><div>' + (err.message||err) + '</div></div>';
+    })
+    .getPurchaseOrders(currentUser.username);
+}
+
+function renderPO() {
+  if (!poData.length) {
+    document.getElementById('poArea').innerHTML =
+      '<div class="empty-state"><div class="icon">🛒</div><div>暂无采购单</div></div>';
+    return;
+  }
+
+  // 按 PO_ID 分组
+  var groups = {}, order = [];
+  poData.forEach(function(row) {
+    var pid = row.poId;
+    if (!groups[pid]) { groups[pid] = { poId: pid, date: row.date, status: row.status, items: [], total: 0 }; order.push(pid); }
+    groups[pid].items.push(row);
+    groups[pid].total += Number(row.totalCost) || 0;
+  });
+
+  var html = '';
+  order.forEach(function(pid) {
+    var po = groups[pid];
+    var sbClass = po.status === '待采购' ? 'sb-pending' :
+                  po.status === '已下单' ? 'sb-ordered' : 'sb-arrived';
+    var itemNames = po.items.slice(0,3).map(function(i){ return escH(i.itemName); }).join('、');
+    if (po.items.length > 3) itemNames += ' 等' + po.items.length + '项';
+
+    var actionBtns = '';
+    if (po.status === '待采购') {
+      actionBtns =
+        '<button class="po-btn po-btn-order" onclick="updatePO(\'' + escH(pid) + '\',\'已下单\')">✅ 确认下单</button>' +
+        '<button class="po-btn po-btn-arrive" onclick="updatePO(\'' + escH(pid) + '\',\'已到货\')">📦 确认到货</button>';
+    } else if (po.status === '已下单') {
+      actionBtns =
+        '<button class="po-btn po-btn-done" disabled>已下单</button>' +
+        '<button class="po-btn po-btn-arrive" onclick="updatePO(\'' + escH(pid) + '\',\'已到货\')">📦 确认到货</button>';
+    } else {
+      actionBtns = '<button class="po-btn po-btn-done" disabled>✅ 已完成</button>';
+    }
+
+    html += '<div class="po-card">' +
+      '<div class="po-header">' +
+        '<div class="po-id">🧾 ' + escH(pid) + '</div>' +
+        '<div class="po-date">' + escH(po.date||'') + '</div>' +
+      '</div>' +
+      '<div class="po-items">' + itemNames + '</div>' +
+      '<div class="po-footer">' +
+        '<div class="po-cost">RM ' + po.total.toFixed(2) + '</div>' +
+        '<span class="status-badge ' + sbClass + '">' + escH(po.status) + '</span>' +
+      '</div>' +
+      '<div class="po-actions">' + actionBtns + '</div>' +
+    '</div>';
+  });
+  document.getElementById('poArea').innerHTML = html;
+}
+
+function updatePO(poId, status) {
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      if (resp && resp.success) {
+        showToast('✅ 状态已更新为: ' + status);
+        loaded.po = false;
+        loadPO();
+      } else {
+        showToast('❌ ' + (resp ? resp.error : '更新失败'));
+      }
+    })
+    .withFailureHandler(function(err){ showToast('❌ ' + (err.message||err)); })
+    .updatePOStatus(poId, status);
+}
+
+// ══════════════════════════════════════════════
+// Tab 4: 账号管理
+// ══════════════════════════════════════════════
+var acctData    = [];
+var editingAcct = null;  // null=新建, string=编辑用户名
+var isBoss      = false;
+
+function loadAcct() {
+  isBoss = currentUser && currentUser.role === 'Boss';
+  document.getElementById('acctArea').innerHTML =
+    '<div class="loading-area"><div class="spinner"></div><div>加载账号...</div></div>';
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      if (!resp || !resp.success) {
+        document.getElementById('acctArea').innerHTML =
+          '<div class="empty-state"><div style="font-size:32px">❌</div><div>' + (resp ? resp.error : '加载失败') + '</div></div>';
+        return;
+      }
+      acctData = resp.staff || [];
+      loaded.acct = true;
+      renderAcct();
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('acctArea').innerHTML =
+        '<div class="empty-state"><div style="font-size:32px">❌</div><div>' + (err.message || err) + '</div></div>';
+    })
+    .getStaffList(currentUser.username);
+}
+
+function renderAcct() {
+  var roleBadge = {
+    'Boss':    '<span style="background:#fce4ec;color:#b71c1c;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700">Boss</span>',
+    'Manager': '<span style="background:#e3f2fd;color:#1565c0;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700">Manager</span>',
+    'Staff':   '<span style="background:#e8f5e9;color:#1b5e20;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700">Staff</span>'
+  };
+
+  var topHtml = isBoss
+    ? '<div style="padding:12px 14px"><button onclick="openAcctModal(null)" ' +
+      'style="width:100%;padding:12px;background:#37474f;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">+ 添加账号</button></div>'
+    : '<div style="padding:10px 14px 4px;font-size:12px;color:#9e9e9e">Manager 只能查看账号列表，Boss 才能增删改</div>';
+
+  if (!acctData.length) {
+    document.getElementById('acctArea').innerHTML = topHtml +
+      '<div class="empty-state"><div style="font-size:36px">👤</div><div>暂无账号数据</div></div>';
+    return;
+  }
+
+  var html = topHtml;
+  acctData.forEach(function(acc) {
+    var badge   = roleBadge[acc.role] || escH(acc.role);
+    var isSelf  = acc.username === currentUser.username;
+    var catsArr = acc.assignedCats
+      ? acc.assignedCats.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+    var catsLabel = catsArr.length ? catsArr.join(' · ') : '全部分类';
+
+    var actionHtml = '';
+    if (isBoss) {
+      actionHtml = '<div style="display:flex;gap:8px;margin-top:10px">' +
+        '<button onclick="openAcctModal(\'' + escH(acc.username) + '\')" ' +
+        'style="flex:1;padding:8px;border:1.5px solid #37474f;border-radius:7px;background:#fff;color:#37474f;font-size:13px;font-weight:600;cursor:pointer">编辑</button>' +
+        (!isSelf
+          ? '<button onclick="confirmDeleteAcct(\'' + escH(acc.username) + '\',\'' + escH(acc.name || acc.username) + '\')" ' +
+            'style="flex:1;padding:8px;border:1.5px solid #d32f2f;border-radius:7px;background:#fff;color:#d32f2f;font-size:13px;font-weight:600;cursor:pointer">删除</button>'
+          : '<button disabled style="flex:1;padding:8px;border:1.5px solid #e0e0e0;border-radius:7px;background:#fafafa;color:#bdbdbd;font-size:13px">自己</button>'
+        ) + '</div>';
+    }
+
+    html += '<div class="staff-card">' +
+      '<div class="sc-header">' +
+        '<div style="flex:1">' +
+          '<div class="sc-name">' + escH(acc.name || acc.username) +
+            (isSelf ? ' <span style="font-size:11px;color:#9e9e9e;font-weight:400">(你)</span>' : '') + '</div>' +
+          '<div class="sc-role" style="margin-top:3px">@' + escH(acc.username) + '&nbsp;&nbsp;' + badge + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#9e9e9e;margin-top:5px">负责: ' + escH(catsLabel) + '</div>' +
+      actionHtml +
+    '</div>';
+  });
+
+  document.getElementById('acctArea').innerHTML = html;
+}
+
+function openAcctModal(username) {
+  editingAcct = username;
+  var isCreate = !username;
+  var acc = null;
+  if (!isCreate) {
+    for (var i = 0; i < acctData.length; i++) {
+      if (acctData[i].username === username) { acc = acctData[i]; break; }
+    }
+  }
+
+  document.getElementById('acctModalTitle').textContent =
+    isCreate ? '添加账号' : ('编辑 · ' + (acc ? (acc.name || acc.username) : username));
+
+  var roleOpts = ['Boss','Manager','Staff'].map(function(r) {
+    return '<option value="' + r + '"' + (!isCreate && acc && acc.role === r ? ' selected' : '') + '>' + r + '</option>';
+  }).join('');
+
+  var cats = allCats.length ? allCats :
+    ['肉类','菜类','海鲜','调料','饮料','主食','蘸料','油料','冷冻','干货','丸子','锅底','消耗品'];
+  var existingCats = acc && acc.assignedCats
+    ? acc.assignedCats.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+  var catChips = cats.map(function(c) {
+    var sel = existingCats.indexOf(c) >= 0;
+    return '<div class="cat-chip' + (sel ? ' selected' : '') + '" data-cat="' + escH(c) + '" ' +
+      'onclick="this.classList.toggle(\'selected\')" ' +
+      'style="display:inline-block;padding:5px 10px;margin:3px;border-radius:14px;font-size:12px;cursor:pointer;' +
+      (sel ? 'background:#d32f2f;color:#fff;' : 'background:#f5f5f5;color:#424242;') +
+      'transition:all .15s">' + cEmoji(c) + ' ' + escH(c) + '</div>';
+  }).join('');
+
+  // 页面权限 chips
+  var initRole = isCreate ? 'Staff' : (acc ? acc.role : 'Staff');
+  var existingPerms = parsePermissions(acc ? acc.permissions : null, initRole);
+  var PAGE_DEFS = [
+    { key: 'check',     label: '📋 盘点页' },
+    { key: 'dashboard', label: '📊 看板'   },
+    { key: 'admin',     label: '⚙️ 管理后台' }
+  ];
+  var TAB_DEFS = [
+    { idx: 0, label: '📦 库存总览' },
+    { idx: 1, label: '👥 盘点分配' },
+    { idx: 2, label: '📅 盘点历史' },
+    { idx: 3, label: '🛒 采购单'   },
+    { idx: 4, label: '👤 账号管理' }
+  ];
+  var pageChips = PAGE_DEFS.map(function(p) {
+    var sel = existingPerms.pages.indexOf(p.key) >= 0;
+    return '<div class="perm-chip' + (sel ? ' selected' : '') + '" data-page="' + p.key + '" onclick="togglePermChip(this)">' + p.label + '</div>';
+  }).join('');
+  var tabChips = TAB_DEFS.map(function(t) {
+    var sel = existingPerms.adminTabs.indexOf(t.idx) >= 0;
+    return '<div class="perm-tab-chip' + (sel ? ' selected' : '') + '" data-tab="' + t.idx + '" onclick="toggleTabChip(this)">' + t.label + '</div>';
+  }).join('');
+  var adminTabsDisplay = existingPerms.pages.indexOf('admin') >= 0 ? 'block' : 'none';
+
+  document.getElementById('acctForm').innerHTML =
+    (isCreate ?
+      '<div class="form-group"><label class="form-label">用户名（登录用）</label>' +
+      '<input class="form-input" id="af_username" type="text" placeholder="例: staff01" autocomplete="off"></div>'
+      : '') +
+    '<div class="form-group"><label class="form-label">真实姓名</label>' +
+    '<input class="form-input" id="af_name" type="text" value="' + (acc ? escH(acc.name || '') : '') + '" placeholder="显示用姓名"></div>' +
+    '<div class="form-group"><label class="form-label">角色</label>' +
+    '<select class="form-input" id="af_role" onchange="onRoleChange(this)">' + roleOpts + '</select></div>' +
+    '<div class="form-group"><label class="form-label">' + (isCreate ? '密码' : '新密码（留空不修改）') + '</label>' +
+    '<input class="form-input" id="af_password" type="password" placeholder="' +
+    (isCreate ? '请设置密码' : '留空则不修改') + '" autocomplete="new-password"></div>' +
+    '<div class="form-group"><label class="form-label">页面权限</label>' +
+    '<div id="pagePermWrap" style="padding:4px 0">' + pageChips + '</div>' +
+    '<div id="adminTabsSection" style="display:' + adminTabsDisplay + ';margin-top:8px">' +
+    '<div style="font-size:11px;color:#9e9e9e;margin-bottom:5px">管理后台 · 可见标签页</div>' +
+    '<div id="tabPermWrap">' + tabChips + '</div>' +
+    '</div></div>' +
+    '<div class="form-group"><label class="form-label">负责分类（不选 = 全部）</label>' +
+    '<div id="acctCatWrap" style="padding:4px 0">' + catChips + '</div></div>' +
+    '<button class="save-btn" id="acctSaveBtn" onclick="saveAcct()">' + (isCreate ? '+ 创建账号' : '💾 保存修改') + '</button>' +
+    '<button onclick="closeAcctModalDirect()" style="width:100%;padding:12px;background:#fff;border:1.5px solid #e0e0e0;border-radius:10px;font-size:14px;color:#757575;cursor:pointer;margin-top:6px">取消</button>';
+
+  document.getElementById('acctOverlay').classList.add('show');
+}
+
+function togglePermChip(el) {
+  el.classList.toggle('selected');
+  var adminSel = document.querySelector('#pagePermWrap [data-page="admin"].selected');
+  var sect = document.getElementById('adminTabsSection');
+  if (sect) sect.style.display = adminSel ? 'block' : 'none';
+}
+function toggleTabChip(el) {
+  el.classList.toggle('selected');
+}
+function onRoleChange(sel) {
+  var role = sel.value;
+  var defaults = ROLE_DEFAULT_PERMS[role] || ROLE_DEFAULT_PERMS['Staff'];
+  document.querySelectorAll('#pagePermWrap [data-page]').forEach(function(chip) {
+    chip.classList.toggle('selected', defaults.pages.indexOf(chip.getAttribute('data-page')) >= 0);
+  });
+  document.querySelectorAll('#tabPermWrap [data-tab]').forEach(function(chip) {
+    chip.classList.toggle('selected', defaults.adminTabs.indexOf(parseInt(chip.getAttribute('data-tab'))) >= 0);
+  });
+  var adminEnabled = defaults.pages.indexOf('admin') >= 0;
+  var sect = document.getElementById('adminTabsSection');
+  if (sect) sect.style.display = adminEnabled ? 'block' : 'none';
+}
+
+function saveAcct() {
+  var isCreate = !editingAcct;
+  var username  = isCreate ? (document.getElementById('af_username') ? document.getElementById('af_username').value.trim() : '') : editingAcct;
+  var name      = document.getElementById('af_name').value.trim();
+  var role      = document.getElementById('af_role').value;
+  var password  = document.getElementById('af_password').value.trim();
+  var chips     = document.querySelectorAll('#acctCatWrap .cat-chip.selected');
+  var cats      = [];
+  chips.forEach(function(el){ cats.push(el.getAttribute('data-cat')); });
+  var assignedCats = cats.join(',');
+
+  // 收集页面权限
+  var selPages = [];
+  document.querySelectorAll('#pagePermWrap [data-page].selected').forEach(function(el) {
+    selPages.push(el.getAttribute('data-page'));
+  });
+  var selTabs = [];
+  document.querySelectorAll('#tabPermWrap [data-tab].selected').forEach(function(el) {
+    selTabs.push(parseInt(el.getAttribute('data-tab')));
+  });
+  var permissionsJson = JSON.stringify({ pages: selPages, adminTabs: selTabs });
+
+  if (isCreate && !username) { showToast('❌ 用户名不能为空'); return; }
+  if (!name)                  { showToast('❌ 姓名不能为空'); return; }
+  if (isCreate && !password)  { showToast('❌ 创建账号必须设置密码'); return; }
+
+  var btn = document.getElementById('acctSaveBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 保存中...';
+
+  var onOk = function(resp) {
+    document.getElementById('acctOverlay').classList.remove('show');
+    if (resp && resp.success) {
+      showToast(isCreate ? '✅ 账号已创建: @' + username : '✅ 账号已更新');
+      loaded.acct = false;
+      loadAcct();
+    } else {
+      showToast('❌ ' + (resp ? resp.error : '操作失败'));
+      btn.disabled = false;
+      btn.textContent = isCreate ? '+ 创建账号' : '💾 保存修改';
+    }
+  };
+  var onFail = function(err) {
+    document.getElementById('acctOverlay').classList.remove('show');
+    showToast('❌ ' + (err.message || err));
+  };
+
+  if (isCreate) {
+    google.script.run
+      .withSuccessHandler(onOk).withFailureHandler(onFail)
+      .createStaff(currentUser.username, { username: username, password: password, name: name, role: role, assignedCats: assignedCats, permissions: permissionsJson });
+  } else {
+    google.script.run
+      .withSuccessHandler(onOk).withFailureHandler(onFail)
+      .updateStaff(currentUser.username, editingAcct, { name: name, role: role, password: password, assignedCats: assignedCats, permissions: permissionsJson });
+  }
+}
+
+function confirmDeleteAcct(username, displayName) {
+  if (!confirm('确定要删除账号「' + displayName + '」(@' + username + ')？\n此操作不可撤销。')) return;
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      if (resp && resp.success) {
+        showToast('✅ 已删除: @' + username);
+        loaded.acct = false;
+        loadAcct();
+      } else {
+        showToast('❌ ' + (resp ? resp.error : '删除失败'));
+      }
+    })
+    .withFailureHandler(function(err) { showToast('❌ ' + (err.message || err)); })
+    .deleteStaff(currentUser.username, username);
+}
+
+function closeAcctModal(evt) {
+  if (evt && evt.target !== document.getElementById('acctOverlay')) return;
+  closeAcctModalDirect();
+}
+function closeAcctModalDirect() {
+  document.getElementById('acctOverlay').classList.remove('show');
+  editingAcct = null;
+}
+
+// ══════════════════════════════════════════════
+// 工具函数
+// ══════════════════════════════════════════════
+function showToast(msg) {
+  var old = document.querySelector('.toast');
+  if (old) old.remove();
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function(){ if (el.parentNode) el.remove(); }, 2800);
+}
+
+function navigateTo(page) {
+  google.script.run.withSuccessHandler(function(url) {
+    var a = document.createElement('a');
+    a.href = url + '?page=' + page;
+    a.target = '_top';
+    document.body.appendChild(a);
+    a.click();
+  }).getAppUrl();
+}
+
+function doLogout() {
+  lsDel('ims_user');
+  try { sessionStorage.removeItem('ims_user'); } catch(e) {}
+  navigateTo('login');
+}
+</script>
+</body>
+</html>

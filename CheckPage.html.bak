@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root { --brand: #d32f2f; --brand-light: #ffebee; --green: #2e7d32; --orange: #f57c00; }
+    body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding-bottom: 100px; }
+    
+    .top-bar {
+      background: var(--brand); color: white; padding: 16px 20px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .top-bar h6 { margin: 0; font-weight: 700; font-size: 16px; }
+    .top-bar small { opacity: 0.85; }
+    
+    .progress-section { background: white; padding: 14px 20px; border-bottom: 1px solid #eee; }
+    .progress { height: 10px; border-radius: 5px; }
+    .progress-bar { background: var(--brand); transition: width 0.5s; }
+    .progress-text { font-size: 13px; color: #666; }
+    
+    .cat-header {
+      background: white; padding: 12px 20px; margin-top: 8px;
+      border-bottom: 1px solid #eee; cursor: pointer; user-select: none;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .cat-header.disabled { background: #f9f9f9; color: #bbb; }
+    .cat-title { font-weight: 600; font-size: 15px; }
+    .cat-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; }
+    
+    .item-row {
+      background: white; padding: 12px 20px; border-bottom: 1px solid #f0f0f0;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .item-name { flex: 1; font-size: 14px; font-weight: 500; }
+    .item-current { font-size: 12px; color: #999; min-width: 50px; text-align: center; }
+    .item-input {
+      width: 70px; text-align: center; border: 2px solid #e0e0e0; border-radius: 10px;
+      padding: 8px 4px; font-size: 16px; font-weight: 600;
+      -webkit-appearance: none; appearance: none;
+    }
+    .item-input:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px rgba(211,47,47,0.15); }
+    .item-input.warning { border-color: var(--orange); background: #fff3e0; }
+    .item-input.checked { border-color: var(--green); background: #e8f5e9; }
+    .item-unit { font-size: 12px; color: #999; min-width: 28px; }
+    .diff-badge { font-size: 11px; min-width: 45px; text-align: center; }
+    
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; background: white;
+      padding: 12px 20px; box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+      z-index: 100;
+    }
+    .btn-submit {
+      background: var(--brand); border: none; border-radius: 12px;
+      padding: 14px; font-size: 16px; font-weight: 600; width: 100%; color: white;
+    }
+    .btn-submit:disabled { background: #ccc; color: #999; }
+    
+    .result-card {
+      background: white; border-radius: 16px; padding: 24px;
+      margin: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .loading { text-align: center; padding: 60px 20px; color: #999; }
+    .loading .spinner-border { color: var(--brand); width: 40px; height: 40px; }
+    
+    .nav-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px; color: white; font-size: 13px; font-weight: 500;
+      padding: 8px 12px; min-height: 44px; min-width: 44px;
+      justify-content: center; text-decoration: none; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn:active { background: rgba(255,255,255,0.3); }
+    .nav-btn i { font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="top-bar">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h6>🍲 张重辉火锅 · 百万镇</h6>
+      <small id="staffInfo">加载中...</small>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span id="dashLink"></span>
+      <button class="nav-btn" onclick="logout()"><i class="bi bi-box-arrow-right"></i> 登出</button>
+    </div>
+  </div>
+</div>
+
+<!-- Progress -->
+<div class="progress-section" id="progressSection">
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <span class="progress-text">📋 今日盘点进度</span>
+    <span class="progress-text"><strong id="progressNum">0/0</strong></span>
+  </div>
+  <div class="progress">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading" id="loadingDiv">
+  <div class="spinner-border mb-3"></div>
+  <div>加载盘点清单...</div>
+</div>
+
+<!-- Items List -->
+<div id="itemsList" style="display:none"></div>
+
+<!-- Submit Result -->
+<div id="resultDiv" style="display:none"></div>
+
+<!-- Bottom Bar -->
+<div class="bottom-bar" id="bottomBar" style="display:none">
+  <button class="btn btn-submit" id="btnSubmit" onclick="submitCheck()" disabled>
+    <span id="submitText">✅ 提交盘点 (0项)</span>
+    <span id="submitSpinner" class="spinner-border spinner-border-sm" style="display:none"></span>
+  </button>
+</div>
+
+<script>
+  var currentUser = null;
+  var allItems = [];
+  var filledCount = 0;
+  var CATEGORY_ICONS = {
+    '肉类': '🥩', '菜类': '🥬', '海鲜': '🦐', '丸子': '🍜',
+    '锅底': '🫕', '调味料': '🧂', '酒水': '🍺', '消耗品': '🧻',
+    '甜品': '🍰', '饮品类': '🥤'
+  };
+  
+  // ============ 初始化 ============
+  window.onload = function() {
+    var saved = localStorage.getItem('ims_user');
+    if (!saved) {
+      document.body.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999">' +
+        '<div style="font-size:36px;margin-bottom:12px">🔒</div>' +
+        '<div style="font-size:15px">未检测到登录信息，正在跳转登录...</div>' +
+        '<div style="font-size:12px;color:#ccc;margin-top:8px">如反复出现，请确认使用正确的网址</div></div>';
+      setTimeout(function() { goLogin(); }, 1500);
+      return;
+    }
+    
+    try {
+      currentUser = JSON.parse(saved);
+      document.getElementById('staffInfo').textContent =
+        currentUser.name + ' · ' + new Date().toLocaleDateString('zh-CN');
+      // Show dashboard link for Manager/Boss
+      if (currentUser.role === 'Manager' || currentUser.role === 'Boss') {
+        document.getElementById('dashLink').innerHTML =
+          '<a href="' + window.location.href.split('?')[0] + '?page=dashboard" class="nav-btn"><i class="bi bi-graph-up"></i> 看板</a>';
+      }
+      loadCheckItems();
+    } catch(e) { goLogin(); }
+  };
+  
+  function goLogin() {
+    localStorage.removeItem('ims_user');
+    window.location.href = window.location.href.split('?')[0] + '?page=login';
+  }
+  
+  function logout() {
+    localStorage.removeItem('ims_user');
+    goLogin();
+  }
+  
+  // ============ 加载盘点物品 ============
+  var loadingTimer = null;
+  function loadCheckItems() {
+    document.getElementById('loadingDiv').style.display = 'block';
+    document.getElementById('loadingDiv').innerHTML =
+      '<div class="spinner-border mb-3" style="color:var(--brand);width:40px;height:40px"></div>' +
+      '<div>加载盘点清单...</div>';
+    document.getElementById('itemsList').style.display = 'none';
+
+    // 30s timeout
+    if (loadingTimer) clearTimeout(loadingTimer);
+    loadingTimer = setTimeout(function() {
+      var ld = document.getElementById('loadingDiv');
+      if (ld.style.display !== 'none') {
+        ld.innerHTML =
+          '<div style="color:var(--brand)">⏱️ 加载超时，服务器响应缓慢</div>' +
+          '<button class="btn btn-sm btn-outline-danger mt-3" onclick="loadCheckItems()">重试</button>';
+      }
+    }, 30000);
+
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (loadingTimer) clearTimeout(loadingTimer);
+        renderItems(result);
+      })
+      .withFailureHandler(function(err) {
+        if (loadingTimer) clearTimeout(loadingTimer);
+        document.getElementById('loadingDiv').innerHTML =
+          '<div style="color:var(--brand)">❌ 加载失败: ' + err.message + '</div>' +
+          '<button class="btn btn-sm btn-outline-danger mt-3" onclick="loadCheckItems()">重试</button>';
+      })
+      .getTodayCheckItems(currentUser.name);
+  }
+  
+  function renderItems(result) {
+    document.getElementById('loadingDiv').style.display = 'none';
+    
+    if (!result.success) {
+      document.getElementById('loadingDiv').style.display = 'block';
+      document.getElementById('loadingDiv').innerHTML = '<div style="color:var(--brand)">❌ ' + result.error + '</div>';
+      return;
+    }
+    
+    allItems = result.items;
+    var totalItems = result.todayTotal;
+    var checkedItems = result.todayChecked;
+    
+    updateProgress(checkedItems, totalItems);
+    
+    // 预计算索引 + 按分类分组
+    var grouped = {};
+    var catOrder = [];
+    for (var i = 0; i < allItems.length; i++) {
+      allItems[i]._idx = i; // 预计算索引，替代 indexOf
+      var cat = allItems[i].category;
+      if (!grouped[cat]) { grouped[cat] = []; catOrder.push(cat); }
+      grouped[cat].push(allItems[i]);
+    }
+    
+    var html = '';
+    
+    // 需要盘点的分类
+    for (var c = 0; c < catOrder.length; c++) {
+      var catName = catOrder[c];
+      var catItems = grouped[catName];
+      var icon = CATEGORY_ICONS[catName] || '📦';
+      var freqLabel = catItems[0].freq === 'daily' ? '每日' : catItems[0].freq === 'weekly' ? '每周' : '每3天';
+      
+      html += '<div class="cat-header" onclick="toggleCat(this)">';
+      html += '<span class="cat-title">' + icon + ' ' + catName + ' <span class="cat-badge bg-light text-dark">' + freqLabel + '</span></span>';
+      html += '<span><span class="cat-badge" id="catCount_' + c + '">0/' + catItems.length + '</span> <i class="bi bi-chevron-down"></i></span>';
+      html += '</div>';
+      html += '<div class="cat-items" id="cat_' + c + '">';
+      
+      for (var j = 0; j < catItems.length; j++) {
+        var item = catItems[j];
+        var itemIdx = item._idx; // 使用预计算索引，避免 O(n) indexOf
+        html += '<div class="item-row" id="row_' + itemIdx + '">';
+        html += '<div class="item-name">' + item.name + '</div>';
+        html += '<div class="item-current">系统<br><strong>' + item.currentQty + '</strong></div>';
+        html += '<input type="number" class="item-input' + (item.checked ? ' checked' : '') + '" id="input_' + itemIdx + '" ';
+        html += 'inputmode="decimal" step="0.1" min="0" ';
+        // 已盘点的物品预填当前数量
+        if (item.checked) {
+          html += 'value="' + item.currentQty + '" ';
+        }
+        html += 'placeholder="—" ';
+        html += 'data-idx="' + itemIdx + '" data-cat="' + c + '" onchange="onItemInput(this)" oninput="onItemInput(this)">';
+        html += '<div class="item-unit">' + item.unit + '</div>';
+        html += '<div class="diff-badge" id="diff_' + itemIdx + '"></div>';
+        html += '</div>';
+      }
+      
+      html += '</div>';
+    }
+    
+    // 不需要盘点的分类
+    var skipped = result.skippedCategories || {};
+    for (var sk in skipped) {
+      var skIcon = CATEGORY_ICONS[sk] || '📦';
+      html += '<div class="cat-header disabled">';
+      html += '<span class="cat-title">' + skIcon + ' ' + sk + '</span>';
+      html += '<span style="font-size:12px">⏭️ ' + skipped[sk].reason + '</span>';
+      html += '</div>';
+    }
+    
+    document.getElementById('itemsList').innerHTML = html;
+    document.getElementById('itemsList').style.display = 'block';
+    document.getElementById('bottomBar').style.display = 'block';
+
+    // 初始化已预填的计数
+    updateFilledCount();
+  }
+  
+  // ============ 交互 ============
+  function toggleCat(header) {
+    var items = header.nextElementSibling;
+    if (items) items.style.display = items.style.display === 'none' ? 'block' : 'none';
+    var icon = header.querySelector('.bi');
+    if (icon) icon.className = items.style.display === 'none' ? 'bi bi-chevron-right' : 'bi bi-chevron-down';
+  }
+  
+  function onItemInput(el) {
+    var idx = parseInt(el.dataset.idx);
+    var catIdx = el.dataset.cat;
+    var item = allItems[idx];
+    var newQty = parseFloat(el.value);
+    var diffEl = document.getElementById('diff_' + idx);
+    
+    if (isNaN(newQty) || el.value === '') {
+      el.className = 'item-input';
+      diffEl.innerHTML = '';
+      updateFilledCount();
+      return;
+    }
+    
+    var diff = newQty - item.currentQty;
+    var diffPct = item.currentQty > 0 ? Math.abs(diff) / item.currentQty : 0;
+    
+    // 显示差异
+    if (diff > 0) {
+      diffEl.innerHTML = '<span class="badge bg-success">+' + diff + '</span>';
+    } else if (diff < 0) {
+      diffEl.innerHTML = '<span class="badge bg-danger">' + diff + '</span>';
+    } else {
+      diffEl.innerHTML = '<span class="badge bg-secondary">0</span>';
+    }
+    
+    // 异常标记
+    if (diffPct > 0.3) {
+      el.className = 'item-input warning';
+      diffEl.innerHTML += '<div style="font-size:10px;color:var(--orange)">⚠️请确认</div>';
+    } else {
+      el.className = 'item-input checked';
+    }
+    
+    // 低库存警告
+    if (newQty < item.minStock) {
+      diffEl.innerHTML += '<div style="font-size:10px;color:var(--brand)">📉低</div>';
+    }
+    
+    updateFilledCount();
+  }
+  
+  function updateFilledCount() {
+    filledCount = 0;
+    for (var i = 0; i < allItems.length; i++) {
+      var el = document.getElementById('input_' + i);
+      if (el && el.value !== '') filledCount++;
+    }
+    
+    var btn = document.getElementById('btnSubmit');
+    btn.disabled = filledCount === 0;
+    document.getElementById('submitText').textContent = '✅ 提交盘点 (' + filledCount + '项)';
+    
+    // 更新各分类计数
+    var catCounts = {};
+    for (var j = 0; j < allItems.length; j++) {
+      var el2 = document.getElementById('input_' + j);
+      var cat = el2 ? el2.dataset.cat : '';
+      if (!catCounts[cat]) catCounts[cat] = { filled: 0, total: 0 };
+      catCounts[cat].total++;
+      if (el2 && el2.value !== '') catCounts[cat].filled++;
+    }
+    for (var c in catCounts) {
+      var badge = document.getElementById('catCount_' + c);
+      if (badge) {
+        badge.textContent = catCounts[c].filled + '/' + catCounts[c].total;
+        badge.className = 'cat-badge ' + (catCounts[c].filled === catCounts[c].total ? 'bg-success text-white' : 'bg-light text-dark');
+      }
+    }
+  }
+  
+  function updateProgress(done, total) {
+    var pct = total > 0 ? Math.round(done / total * 100) : 0;
+    document.getElementById('progressNum').textContent = done + '/' + total;
+    document.getElementById('progressBar').style.width = pct + '%';
+  }
+  
+  // ============ 提交 ============
+  function submitCheck() {
+    var items = [];
+    for (var i = 0; i < allItems.length; i++) {
+      var el = document.getElementById('input_' + i);
+      if (el && el.value !== '') {
+        items.push({ itemId: allItems[i].id, newQty: parseFloat(el.value) });
+      }
+    }
+    
+    if (items.length === 0) return;
+    
+    // Confirm
+    if (!confirm('确认提交 ' + items.length + ' 项盘点数据？')) return;
+    
+    document.getElementById('btnSubmit').disabled = true;
+    document.getElementById('submitText').textContent = '提交中...';
+    document.getElementById('submitSpinner').style.display = 'inline-block';
+    
+    google.script.run
+      .withSuccessHandler(showResult)
+      .withFailureHandler(function(err) {
+        alert('提交失败: ' + err.message);
+        document.getElementById('btnSubmit').disabled = false;
+        document.getElementById('submitText').textContent = '✅ 提交盘点 (' + filledCount + '项)';
+        document.getElementById('submitSpinner').style.display = 'none';
+      })
+      .submitCheckRecord(currentUser.name, items);
+  }
+  
+  function showResult(result) {
+    document.getElementById('itemsList').style.display = 'none';
+    document.getElementById('bottomBar').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'none';
+    
+    var html = '<div class="result-card text-center">';
+    
+    if (result.success) {
+      html += '<div style="font-size:48px">✅</div>';
+      html += '<h5 class="mt-2">盘点完成!</h5>';
+      html += '<div class="text-muted mb-3">' + result.staffName + ' · ' + result.timestamp + '</div>';
+      html += '<div class="row g-2 mb-3">';
+      html += '<div class="col-6"><div class="p-2 bg-light rounded">📦 已更新<br><strong>' + result.updated + '项</strong></div></div>';
+      html += '<div class="col-6"><div class="p-2 ' + (result.lowStockCount > 0 ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10') + ' rounded">';
+      html += '📉 低库存<br><strong>' + result.lowStockCount + '项</strong></div></div>';
+      html += '</div>';
+      
+      if (result.abnormalCount > 0) {
+        html += '<div class="alert alert-warning text-start" style="font-size:13px">';
+        html += '<strong>⚠️ 异常差异 ' + result.abnormalCount + ' 项:</strong><br>';
+        for (var i = 0; i < result.abnormalItems.length; i++) {
+          var ab = result.abnormalItems[i];
+          html += ab.name + ': ' + ab.oldQty + '→' + ab.newQty + ' (' + ab.pct + '%)<br>';
+        }
+        html += '</div>';
+      }
+      
+      if (result.lowStockCount > 0) {
+        html += '<div class="alert alert-danger text-start" style="font-size:13px">';
+        html += '<strong>📉 低库存物品:</strong><br>';
+        for (var j = 0; j < result.lowStockItems.length; j++) {
+          var ls = result.lowStockItems[j];
+          html += ls.name + ': ' + ls.qty + ls.unit + ' (最低' + ls.min + ')<br>';
+        }
+        html += '</div>';
+      }
+    } else {
+      html += '<div style="font-size:48px">❌</div>';
+      html += '<h5 class="mt-2">提交失败</h5>';
+      html += '<div class="text-muted">' + (result.error || '未知错误') + '</div>';
+    }
+    
+    html += '<button class="btn btn-outline-danger mt-3" onclick="location.reload()">返回盘点</button>';
+    html += '</div>';
+    
+    document.getElementById('resultDiv').innerHTML = html;
+    document.getElementById('resultDiv').style.display = 'block';
+  }
+</script>
+
+</body>
+</html>

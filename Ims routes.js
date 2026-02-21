@@ -78,12 +78,13 @@ function doGet(e) {
     switch (page) {
       case 'check': fileName = 'CheckPage'; break;
       case 'dashboard': fileName = 'StockDashboard'; break;
+      case 'admin': fileName = 'AdminPage'; break;
       default: fileName = 'Login'; break;
     }
 
     // 直接用 createHtmlOutputFromFile，保留 google.script.run 桥接
     return HtmlService.createHtmlOutputFromFile(fileName)
-      .setTitle('张重辉火锅 · 库存管理')
+      .setTitle('GLOBAL CHAIN F&B SDN. BHD. · 库存管理')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1');
 
@@ -94,7 +95,7 @@ function doGet(e) {
       '<p>' + err.message + '</p>' +
       '<a href="' + ScriptApp.getService().getUrl() + '?page=login">返回登录</a>' +
       '</div>'
-    ).setTitle('张重辉火锅 · 错误')
+    ).setTitle('GLOBAL CHAIN F&B SDN. BHD. · 错误')
      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 }
@@ -152,6 +153,18 @@ function doPost(e) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// ============================================================
+// 页面跳转辅助
+// ============================================================
+
+/**
+ * 返回 Web App 的根 URL（不含 ?page=...）
+ * 前端无法读 window.top.location，通过此函数从服务端获取
+ */
+function getAppUrl() {
+  return ScriptApp.getService().getUrl();
 }
 
 // ============================================================
