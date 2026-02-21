@@ -388,6 +388,11 @@ function generatePurchaseOrder() {
     }
 
     var poSheet = getSheet_(IMS_CONFIG.SHEETS.PO);
+    if (!poSheet) {
+      poSheet = getIMSSS_().insertSheet(IMS_CONFIG.SHEETS.PO);
+      poSheet.getRange(1, 1, 1, 13).setValues([['PO_ID','Date','Branch','Item_ID','Item_Name',
+        'Current_Qty','Order_Qty','Unit','Price','Total','Supplier','Status','Created_By']]);
+    }
     var today = fmtDate_();
     var timeStr = Utilities.formatDate(new Date(), IMS_CONFIG.TZ, 'HHmmss');
     var poId = 'PO-' + today.replace(/-/g, '') + '-' + timeStr;
@@ -1149,6 +1154,7 @@ function getPurchaseOrders(username) {
     }
 
     var sheet = getSheet_(IMS_CONFIG.SHEETS.PO);
+    if (!sheet) return { success: true, orders: [] };
     var data = sheet.getDataRange().getValues();
     var orders = {};
 
