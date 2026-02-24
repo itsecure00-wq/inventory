@@ -538,6 +538,17 @@ var STRINGS = {
     warnImgFail:   '⚠️ 图片上传失败，物品仍将保存（无图）',
     successAdded:  '✅ 物品已添加:',
     successSaved:  '✅ 已记录 %n 件盘点物品',
+    saving:           '⏳ 保存中...',
+    submitting:       '⏳ 提交中...',
+    submitFail:       '提交失败',
+    serverError:      '服务器无响应',
+    netErrBody:       '请检查网络后重试。',
+    addFail:          '添加失败',
+    minOneItem:       '请至少填写一件物品的数量',
+    confirmFilled:    '已填写 %n 件物品。',
+    confirmSkip:      '另有 %n 件未填写，将跳过。',
+    confirmQuestion:  '确认提交本次盘点？',
+    progressText:     '盘点进度：%d / %t 件',
   },
   my: {
     pageTitle:            '🔥 ကုန်ပစ္စည်းစစ်ဆေး',
@@ -595,6 +606,17 @@ var STRINGS = {
     warnImgFail:   '⚠️ ပုံဓင်မရပါဂန့း ပစ္စည်းကို ပုံမပါဘဲ သိမ်းမည်ဂော',
     successAdded:  '✅ ပစ္စည်းထည့့ပြား:',
     successSaved:  '✅ ပစ္စည်း %n ခု မှတ်မံးဓင်ပြား',
+    saving:           '⏳ သိမ်းနေသည်...',
+    submitting:       '⏳ တင်နေသည်...',
+    submitFail:       'တင်မရပါ',
+    serverError:      'ဆာဗာ တုံ့ပြန်မှု မရှိပါ',
+    netErrBody:       'ကွန်ရက် စစ်ပြီး ထပ်ကြိုးစားပါ။',
+    addFail:          'ထည့်မရပါ',
+    minOneItem:       'အနည်းဆုံး ပစ္စည်းတစ်ခု ပမာဏ ဖြည့်ပေးပါ',
+    confirmFilled:    'ပစ္စည်း %n ခု ဖြည့်ပြီး။',
+    confirmSkip:      'ကျန် %n ခု မဖြည့်ပါ၊ ကျော်မည်။',
+    confirmQuestion:  'ဤစစ်ဆေးမှု တင်ရန် အတည်ပြုမလား？',
+    progressText:     'စစ်ဆေးမှု：%d / %t ခု',
   }
 };
 
@@ -815,7 +837,7 @@ function saveNewItem() {
   }
 
   var btn = document.getElementById('addItemSaveBtn');
-  btn.disabled = true; btn.textContent = '⏳ 保存中...';
+  btn.disabled = true; btn.textContent = t('saving');
 
   function doCreate(imageUrl) {
     google.script.run
@@ -825,7 +847,7 @@ function saveNewItem() {
           document.getElementById('addItemOverlay').classList.remove('show');
           showToast(t('successAdded') + ' ' + name);
         } else {
-          showToast('❌ ' + (resp ? resp.error : '添加失败'));
+          showToast('❌ ' + (resp ? resp.error : t('addFail')));
         }
       })
       .withFailureHandler(function(err) {
@@ -1157,7 +1179,7 @@ function updateProgress(done, total) {
   if (done < 0) { done = countFilled(); total = allItems.length; }
   var pct = total > 0 ? Math.round(done / total * 100) : 0;
   document.getElementById('progressText').textContent =
-    '盘点进度：' + done + ' / ' + total + ' 件';
+    t('progressText').replace('%d', done).replace('%t', total);
   document.getElementById('progressPct').textContent  = pct + '%';
   document.getElementById('progressFill').style.width = pct + '%';
 }
@@ -1167,11 +1189,11 @@ function updateProgress(done, total) {
 // ══════════════════════════════════════════════
 function confirmSubmit() {
   var items = collectItems();
-  if (!items.length) { alert('请至少填写一件物品的数量'); return; }
+  if (!items.length) { alert(t('minOneItem')); return; }
   var missing = allItems.length - items.length;
-  var msg = '已填写 <b>' + items.length + '</b> 件物品。';
-  if (missing > 0) msg += '<br>另有 <b>' + missing + '</b> 件未填写，将跳过。';
-  msg += '<br><br>确认提交本次盘点？';
+  var msg = t('confirmFilled').replace('%n', '<b>' + items.length + '</b>');
+  if (missing > 0) msg += '<br>' + t('confirmSkip').replace('%n', '<b>' + missing + '</b>');
+  msg += '<br><br>' + t('confirmQuestion');
   showModal('📋', t('confirmTitle'), msg, [
     { label: t('confirmTitle'), primary: true,  fn: doSubmit },
     { label: t('continueSurvey'), primary: false, fn: closeModal }
@@ -1198,15 +1220,15 @@ function doSubmit() {
   var items = collectItems();
   var btn = document.getElementById('submitBtn');
   btn.disabled = true;
-  btn.textContent = '⏳ 提交中...';
+  btn.textContent = t('submitting');
 
   google.script.run
     .withSuccessHandler(onSubmitDone)
     .withFailureHandler(function(err) {
       btn.disabled = false;
       updateFilledCount();
-      showModal('❌', '提交失败',
-        '错误：' + (err.message || err) + '<br>请检查网络后重试。', [
+      showModal('❌', t('submitFail'),
+        '错误：' + (err.message || err) + '<br>' + t('netErrBody'), [
         { label: t('retryBtn'), primary: true,  fn: confirmSubmit },
         { label: t('cancelBtn'), primary: false, fn: closeModal }
       ]);
@@ -1218,7 +1240,7 @@ function onSubmitDone(resp) {
   if (!resp || !resp.success) {
     document.getElementById('submitBtn').disabled = false;
     updateFilledCount();
-    showModal('❌', '提交失败', resp ? resp.error : '服务器无响应', [
+    showModal('❌', t('submitFail'), resp ? resp.error : t('serverError'), [
       { label: t('retryBtn'), primary: true,  fn: confirmSubmit },
       { label: t('cancelBtn'), primary: false, fn: closeModal }
     ]);
