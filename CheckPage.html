@@ -461,6 +461,168 @@
 // 由服务端注入，避免客户端异步 getAppUrl() 导致移动端 redirect blocked
 var APP_URL = '<?= appUrl ?>';
 
+// ── i18n ──────────────────────────────────────────────────────
+var currentLang = localStorage.getItem('ims_lang') || 'zh';
+
+var STRINGS = {
+  zh: {
+    pageTitle:            '🔥 库存盘点',
+    addItemBtn:           '＋ 物品',
+    logoutBtn:            '退出',
+    progressPrefix:       '已填:',
+    loading:              '加载中...',
+    loadingItems:         '正在加载盘点物品...',
+    noCategoryItems:      '该分类暂无物品',
+    noTasksToday:         '今日暂无分配给您的盘点任务',
+    currentStock:         '现有:',
+    submitBarLabel:       '提交盘点记录',
+    submitBtn:            '提交盘点',
+    submitBtnAll:         '✅ 全部填完，提交',
+    draftSaved:           '📝 草稿已保存',
+    confirmTitle:         '确认提交',
+    confirmBtn:           '完成',
+    retryBtn:             '重试',
+    continueSurvey:       '继续盘点',
+    logoutTitle:          '确认退出？',
+    logoutBody:           '您有未提交的草稿数据。<br>退出后，草稿将继续保留。',
+    logoutConfirm:        '退出登录',
+    successTitle:         '提交成功！',
+    successMsg:           '已记录 %n 件盘点物品！',
+    successAbnormal:      '以下物品库存异常，请告知主管：',
+    addItemTitle:         '➕ 新增物品',
+    photoLabel:           '拍照 / 选图（可选）',
+    itemNameLabel:        '物品名称',
+    itemNamePh:           '输入物品名称',
+    categoryLabel:        '类别',
+    unitLabel:            '计量单位',
+    pkgLabel:             '每包件数',
+    pkgPh:                '例:10',
+    addItemSaveBtn:       '+ 添加物品',
+    cancelBtn:            '取消',
+    unit_kg:   'kg（公斤）',  unit_g:    'g（克）',
+    unit_bao:  '包',          unit_he:   '盒',
+    unit_ping: '瓶',          unit_tong: '桶',
+    unit_xiang:'筱',          unit_dai:  '袋',
+    unit_fen:  '份',          unit_tiao: '条',
+    unit_guan: '罐',          unit_L:    '升（L）',
+    unit_mL:   '毫升（mL）',  unit_ge:   '个',
+    unit_pian: '片',
+    cat_rou:     '肉类',   cat_cai:      '菜类',
+    cat_haixian: '海鲜',   cat_tiaoliao: '调料',
+    cat_yinliao: '饮料',   cat_zhushi:   '主食',
+    cat_zhanliao:'萱料',   cat_youliao:  '油料',
+    cat_lengdong:'冷冻',   cat_ganhuo:   '干货',
+    cat_wanzi:   '丸子',   cat_guodi:    '锅底',
+    cat_tianpin: '甜品',   cat_jiushui:  '酒水',
+    cat_xiaochi: '小吃',   cat_xiaohao:  '消耗品',
+    cat_canju:   '餐具',   cat_qita:     '其他',
+    errNameEmpty:  '❌ 物品名称不能为空',
+    errFillPkg:    '❌ 请填写每包件数',
+    warnImgFail:   '⚠️ 图片上传失败，物品仍将保存（无图）',
+    successAdded:  '✅ 物品已添加:',
+    successSaved:  '✅ 已记录 %n 件盘点物品',
+  },
+  my: {
+    pageTitle:            '🔥 ကုန်ပစ္စည်းစစ်ဆေး',
+    addItemBtn:           '＋ ပစ္စည်း',
+    logoutBtn:            'ထွက်',
+    progressPrefix:       'ဖြည့ပြား:',
+    loading:              'ဓင်နေသည်...',
+    loadingItems:         'ကုန်ပစ္စည်းများ ဓင်နေသည်...',
+    noCategoryItems:      'ဒေအမျိုအစ္းပီတင့် ပစ္စည်းမရှိပါ',
+    noTasksToday:         'ယနေ့ သင့့အတွက် စစ်ဆေးရမည့့ ပစ္စည်းမရှိပါ',
+    currentStock:         'ရှိ:',
+    submitBarLabel:       'မှတ်မံးဓင်ရန်',
+    submitBtn:            'ဓင်ရန်',
+    submitBtnAll:         '✅ အားလုံဖြည့ပြားးတင်ရန်',
+    draftSaved:           '📝 မူကြမ်း သိမ်းပြား',
+    confirmTitle:         'ဓင်ရန် အတည့ပြု',
+    confirmBtn:           'ပြားပါပြဪ',
+    retryBtn:             'ထပ်ကြိုးစာရန်',
+    continueSurvey:       'ဆက်စစ်ဆေးရန်',
+    logoutTitle:          'ထွက်ခွာမည်လာ？',
+    logoutBody:           'ဓင်မပြားသေးသိမ်း မူကြမ်းဒေတာ ရှိနေသည်ဂန့ဗာဂိထွက်ပြဪနောက် မူကြမ်းကို သိမ်းဆညးထားမည်ဂော<br>ထွက်ပြဪနောက် မူကြမ်းကို သိမ်းဆညးဆညးထားမည်ဂောဂောက်',
+    logoutConfirm:        'ထွက်ပါ',
+    successTitle:         'ဓင်ပြားပါပြဪ！',
+    successMsg:           'ပစ္စည်း %n ခု မှတ်မံးဓင်ပြား！',
+    successAbnormal:      'အာက်ပါ ပစ္စည်းများ မမှန်ကန်ပါဂန့း ခောငးဆောကို ပြာပါ：',
+    addItemTitle:         '➕ ပစ္စည်းအသစ် ထည့့ရန်',
+    photoLabel:           'ဒာတ်ပုံ / ပုံရွေးရန်（ရွေးနိုင်）',
+    itemNameLabel:        'ပစ္စည်းအမည်',
+    itemNamePh:           'ပစ္စည်းအမည် ထည့့ပါ',
+    categoryLabel:        'အမျိုအစ္း',
+    unitLabel:            'တိုင်းတာသည့့ ယူနစ်',
+    pkgLabel:             'တစ်ထုပ်လျှင် အရေအတွက်',
+    pkgPh:                'ဥပမာ:10',
+    addItemSaveBtn:       '+ ပစ္စည်းထည့့ရန်',
+    cancelBtn:            'ပယ်ဖျက်ရန်',
+    unit_kg:   'kg（ကဪလိုဂရမ်）', unit_g:    'g（ဂရမ်）',
+    unit_bao:  'ထုပ်',             unit_he:   'သေတ္တာ',
+    unit_ping: 'ပုလင်း',           unit_tong: 'ပုံး',
+    unit_xiang:'ဘောက်စ်',          unit_dai:  'အိတ်',
+    unit_fen:  'ဆာဗစ်',            unit_tiao: 'ချာင်း',
+    unit_guan: 'ဘူး',              unit_L:    'လဪတာ（L）',
+    unit_mL:   'မဪလဪလဪတာ（mL）',   unit_ge:   'ခု',
+    unit_pian: 'ချပ်',
+    cat_rou:     'အသား',            cat_cai:      '၀င်းသဪး၀င်းရွက်',
+    cat_haixian: 'ပင်လယ်စာ',       cat_tiaoliao: 'အမြုတ်',
+    cat_yinliao: 'အချိုရည်',        cat_zhushi:   'အဒိကအစားအစာ',
+    cat_zhanliao:'ဆာ့စ်',          cat_youliao:  'ဆဪ',
+    cat_lengdong:'အေးခဲ',           cat_ganhuo:   'ခြာက်သွေ့ကုန်',
+    cat_wanzi:   'ဂျင်မာေားကြာ့', cat_guodi:    '၀င်းအုက်',
+    cat_tianpin: 'မုည့့',            cat_jiushui:  'အရက်',
+    cat_xiaochi: 'မုည့့၀င်းခါး',    cat_xiaohao:  'သုံးပစ္စည်း',
+    cat_canju:   'ဇွန်းခက်',        cat_qita:     'အခြား',
+    errNameEmpty:  '❌ ပစ္စည်းအမည် ဖြည့့ပေးပါ',
+    errFillPkg:    '❌ တစ်ထုပ်လျှင် အရေအတွက် ဖြည့့ပေးပါ',
+    warnImgFail:   '⚠️ ပုံဓင်မရပါဂန့း ပစ္စည်းကို ပုံမပါဘဲ သိမ်းမည်ဂော',
+    successAdded:  '✅ ပစ္စည်းထည့့ပြား:',
+    successSaved:  '✅ ပစ္စည်း %n ခု မှတ်မံးဓင်ပြား',
+  }
+};
+
+// Category Chinese name → STRINGS key (values stay Chinese for backend)
+var CAT_KEYS = {
+  '肉类':'cat_rou',   '菜类':'cat_cai',      '海鲜':'cat_haixian',
+  '调料':'cat_tiaoliao','饮料':'cat_yinliao','主食':'cat_zhushi',
+  '萱料':'cat_zhanliao','油料':'cat_youliao','冷冻':'cat_lengdong',
+  '干货':'cat_ganhuo', '丸子':'cat_wanzi',   '锅底':'cat_guodi',
+  '甜品':'cat_tianpin','酒水':'cat_jiushui', '小吃':'cat_xiaochi',
+  '消耗品':'cat_xiaohao','餐具':'cat_canju', '其他':'cat_qita'
+};
+
+function t(key) {
+  return (STRINGS[currentLang] && STRINGS[currentLang][key]) ||
+         (STRINGS.zh[key]) || key;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('ims_lang', lang);
+  applyLang();
+}
+
+function applyLang() {
+  // 1. Update static HTML elements with data-zh attribute
+  document.querySelectorAll('[data-zh]').forEach(function(el) {
+    el.textContent = (currentLang === 'my' ? el.dataset.my : el.dataset.zh) || el.dataset.zh;
+  });
+  // 2. Update placeholder inputs with data-ph-zh attribute
+  document.querySelectorAll('[data-ph-zh]').forEach(function(el) {
+    el.placeholder = (currentLang === 'my' ? el.dataset.phMy : el.dataset.phZh) || el.dataset.phZh;
+  });
+  // 3. Update lang toggle button (shows target language)
+  var btn = document.getElementById('langToggleBtn');
+  if (btn) btn.textContent = currentLang === 'zh' ? 'မြ' : '中';
+  // 4. Re-apply dynamic UI if items are loaded
+  if (typeof allItems !== 'undefined' && allItems.length) {
+    updateProgress();
+    updateSubmitBtn();
+    renderItems();
+  }
+}
+// ── end i18n ───────────────────────────────────────────────────────
+
 // ══════════════════════════════════════════════
 // Storage 辅助
 // ══════════════════════════════════════════════
