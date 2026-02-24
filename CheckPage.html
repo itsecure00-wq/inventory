@@ -358,12 +358,13 @@
 <!-- 顶栏 -->
 <div class="topbar">
   <div>
-    <div class="topbar-title">🔥 库存盘点</div>
+    <div class="topbar-title" data-zh="🔥 库存盘点" data-my="🔥 ကုန်ပစ္စည်းစစ်ဆေး">🔥 库存盘点</div>
     <div class="topbar-sub" id="staffLabel">员工盘点</div>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <button class="logout-btn" id="addItemTopBtn" onclick="openAddItemModal()"
-            style="display:none;background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5)">＋ 物品</button>
+            style="display:none;background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5)"
+            data-zh="＋ 物品" data-my="＋ ပစ္စည်း">＋ 物品</button>
     <button class="lang-toggle-btn" id="langToggleBtn" onclick="setLang(currentLang==='zh'?'my':'zh')">မြ</button>
     <button class="logout-btn" onclick="doLogout()" data-zh="退出" data-my="ထွက်">退出</button>
   </div>
@@ -386,17 +387,18 @@
 <!-- 状态 / 列表 -->
 <div id="statusArea" class="status-area">
   <div class="spinner"></div>
-  <div>正在加载盘点物品...</div>
+  <div data-zh="正在加载盘点物品..." data-my="ကုန်ပစ္စည်းများ တင်နေသည်...">正在加载盘点物品...</div>
 </div>
 <div class="items-list" id="itemsList" style="display:none"></div>
 
 <!-- 底部提交栏 -->
 <div class="bottom-bar">
   <div class="bottom-summary">
-    <span id="filledCount">已填: 0 / 0</span>
-    <span class="draft-label" id="draftLabel">📝 草稿已保存</span>
+    <span id="filledCount" data-zh="已填: 0 / 0" data-my="ဖြည့်ပြီး: 0 / 0">已填: 0 / 0</span>
+    <span class="draft-label" id="draftLabel" data-zh="📝 草稿已保存" data-my="📝 မူကြမ်း သိမ်းပြီး">📝 草稿已保存</span>
   </div>
-  <button class="submit-btn" id="submitBtn" onclick="confirmSubmit()" disabled>
+  <button class="submit-btn" id="submitBtn" onclick="confirmSubmit()" disabled
+          data-zh="提交盘点记录" data-my="မှတ်တမ်းတင်ရန်">
     提交盘点记录
   </button>
 </div>
