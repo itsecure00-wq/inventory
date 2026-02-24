@@ -332,6 +332,20 @@
     }
     .item-photo img { cursor: pointer; }
 
+    /* ── 语言切换按钮 ── */
+    .lang-toggle-btn {
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.4);
+      color: #fff;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      line-height: 1.4;
+      margin-right: 6px;
+    }
+
     /* ── 手机专属功能：桌面隐藏增加物品按鈕 ── */
     @media (min-width: 769px) {
       .add-item-fab  { display: none !important; }
@@ -350,7 +364,8 @@
   <div style="display:flex;align-items:center;gap:8px">
     <button class="logout-btn" id="addItemTopBtn" onclick="openAddItemModal()"
             style="display:none;background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5)">＋ 物品</button>
-    <button class="logout-btn" onclick="doLogout()">退出</button>
+    <button class="lang-toggle-btn" id="langToggleBtn" onclick="setLang(currentLang==='zh'?'my':'zh')">မြ</button>
+    <button class="logout-btn" onclick="doLogout()" data-zh="退出" data-my="ထွက်">退出</button>
   </div>
 </div>
 
