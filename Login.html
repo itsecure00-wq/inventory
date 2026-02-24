@@ -189,12 +189,7 @@
     var targetPage = page;
     google.script.run
       .withSuccessHandler(function(url) {
-        // Use <a target="_top"> click — the only reliable navigation from GAS sandbox
-        var a = document.createElement('a');
-        a.href = url + '?page=' + targetPage;
-        a.target = '_top';
-        document.body.appendChild(a);
-        a.click();
+        window.top.location.href = url + '?page=' + targetPage;
       })
       .withFailureHandler(function(err) {
         document.getElementById('errorMsg').textContent = '跳转失败: ' + (err.message || err);

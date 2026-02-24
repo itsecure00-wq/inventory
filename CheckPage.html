@@ -450,11 +450,7 @@ function navigateTo(page) {
   showLoading('正在跳转...');
   google.script.run
     .withSuccessHandler(function(url) {
-      var a = document.createElement('a');
-      a.href = url + '?page=' + page;
-      a.target = '_top';
-      document.body.appendChild(a);
-      a.click();
+      window.top.location.href = url + '?page=' + page;
     })
     .withFailureHandler(function(err) {
       var el = document.getElementById('statusArea');
@@ -1061,11 +1057,7 @@ function goLogin() {
   showLoading('正在跳转到登录页...');
   google.script.run
     .withSuccessHandler(function(url) {
-      var a = document.createElement('a');
-      a.href = url + '?page=login';
-      a.target = '_top';
-      document.body.appendChild(a);
-      a.click();
+      window.top.location.href = url + '?page=login';
     })
     .withFailureHandler(function(err) {
       var el = document.getElementById('statusArea');
