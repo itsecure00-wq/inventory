@@ -389,7 +389,7 @@
 <button class="add-item-fab" id="addItemFab" onclick="openAddItemModal()">＋</button>
 
 <!-- 图片放大 Lightbox -->
-<div id="imgLightbox" onclick="closeImgLightbox()">
+<div id="imgLightbox">
   <span id="imgLightboxClose">✕</span>
   <img id="imgLightboxImg" src="" alt="">
   <div id="imgLightboxName"></div>
@@ -495,12 +495,15 @@ function closeImgLightbox() {
   document.getElementById('imgLightbox').classList.remove('show');
   document.getElementById('imgLightboxImg').src = '';
 }
-document.getElementById('imgLightboxImg').addEventListener('click', function(e) {
-  e.stopPropagation();
-});
-document.getElementById('imgLightboxClose').addEventListener('click', function(e) {
-  e.stopPropagation();
-  closeImgLightbox();
+window.addEventListener('load', function() {
+  document.getElementById('imgLightboxImg').addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+  document.getElementById('imgLightboxClose').addEventListener('click', function(e) {
+    e.stopPropagation();
+    closeImgLightbox();
+  });
+  document.getElementById('imgLightbox').addEventListener('click', closeImgLightbox);
 });
 
 // ══════════════════════════════════════════════
