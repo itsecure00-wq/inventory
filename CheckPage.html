@@ -536,14 +536,14 @@ var STRINGS = {
     submitBtn:            'ဓင်ရန်',
     submitBtnAll:         '✅ အားလုံဖြည့ပြားးတင်ရန်',
     draftSaved:           '📝 မူကြမ်း သိမ်းပြား',
-    confirmTitle:         'ဓင်ရန် အတည့ပြု',
-    confirmBtn:           'ပြားပါပြဪ',
+    confirmTitle:         'တင်ရန် အတည်ပြု',
+    confirmBtn:           'ပြီးပါပြီ',
     retryBtn:             'ထပ်ကြိုးစာရန်',
     continueSurvey:       'ဆက်စစ်ဆေးရန်',
     logoutTitle:          'ထွက်ခွာမည်လာ？',
-    logoutBody:           'ဓင်မပြားသေးသိမ်း မူကြမ်းဒေတာ ရှိနေသည်ဂန့ဗာဂိထွက်ပြဪနောက် မူကြမ်းကို သိမ်းဆညးထားမည်ဂော<br>ထွက်ပြဪနောက် မူကြမ်းကို သိမ်းဆညးဆညးထားမည်ဂောဂောက်',
+    logoutBody:           'တင်မပြီးသေးသောမူကြမ်းဒေတာ ရှိနေသည်။<br>ထွက်ပြီးနောက် မူကြမ်းကို သိမ်းဆည်းထားမည်။',
     logoutConfirm:        'ထွက်ပါ',
-    successTitle:         'ဓင်ပြားပါပြဪ！',
+    successTitle:         'တင်ပြီးပါပြီ！',
     successMsg:           'ပစ္စည်း %n ခု မှတ်မံးဓင်ပြား！',
     successAbnormal:      'အာက်ပါ ပစ္စည်းများ မမှန်ကန်ပါဂန့း ခောငးဆောကို ပြာပါ：',
     addItemTitle:         '➕ ပစ္စည်းအသစ် ထည့့ရန်',
@@ -617,8 +617,8 @@ function applyLang() {
   // 4. Re-apply dynamic UI if items are loaded
   if (typeof allItems !== 'undefined' && allItems.length) {
     updateProgress();
-    updateSubmitBtn();
-    renderItems();
+    updateFilledCount();
+    renderItems(currentCat);
   }
 }
 // ── end i18n ───────────────────────────────────────────────────────
