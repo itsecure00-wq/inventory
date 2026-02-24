@@ -763,7 +763,7 @@ function openAddItemModal() {
 
   // 重置按钮
   var btn = document.getElementById('addItemSaveBtn');
-  btn.disabled = false; btn.textContent = '+ 添加物品';
+  btn.disabled = false; btn.textContent = t('addItemSaveBtn');
 
   document.getElementById('addItemOverlay').classList.add('show');
 }
@@ -806,10 +806,10 @@ function saveNewItem() {
   var cat      = document.getElementById('ai_cat').value;
   var unitBase = document.getElementById('ai_unit').value;
   var pkgQty   = document.getElementById('ai_pkg_qty').value.trim();
-  if (!name) { showToast('❌ 物品名称不能为空'); return; }
+  if (!name) { showToast(t('errNameEmpty')); return; }
   var unit = unitBase;
   if (PKG_UNITS.indexOf(unitBase) >= 0) {
-    if (!pkgQty || Number(pkgQty) < 1) { showToast('❌ 请填写每包件数'); return; }
+    if (!pkgQty || Number(pkgQty) < 1) { showToast(t('errFillPkg')); return; }
     unit = unitBase + '(' + pkgQty + '件)';
   }
 
@@ -819,16 +819,16 @@ function saveNewItem() {
   function doCreate(imageUrl) {
     google.script.run
       .withSuccessHandler(function(resp) {
-        btn.disabled = false; btn.textContent = '+ 添加物品';
+        btn.disabled = false; btn.textContent = t('addItemSaveBtn');
         if (resp && resp.success) {
           document.getElementById('addItemOverlay').classList.remove('show');
-          showToast('✅ 物品已添加: ' + name);
+          showToast(t('successAdded') + ' ' + name);
         } else {
           showToast('❌ ' + (resp ? resp.error : '添加失败'));
         }
       })
       .withFailureHandler(function(err) {
-        btn.disabled = false; btn.textContent = '+ 添加物品';
+        btn.disabled = false; btn.textContent = t('addItemSaveBtn');
         showToast('❌ ' + (err.message || err));
       })
       .createItem(currentUser.username, { name: name, category: cat, unit: unit, imageUrl: imageUrl || '' });
@@ -840,7 +840,7 @@ function saveNewItem() {
         if (resp && resp.success) {
           doCreate(resp.url);
         } else {
-          showToast('⚠️ 图片上传失败，物品仍将保存（无图）');
+          showToast(t('warnImgFail'));
           doCreate('');
         }
       })
@@ -1170,9 +1170,9 @@ function confirmSubmit() {
   var msg = '已填写 <b>' + items.length + '</b> 件物品。';
   if (missing > 0) msg += '<br>另有 <b>' + missing + '</b> 件未填写，将跳过。';
   msg += '<br><br>确认提交本次盘点？';
-  showModal('📋', '确认提交', msg, [
-    { label: '确认提交', primary: true,  fn: doSubmit },
-    { label: '继续盘点', primary: false, fn: closeModal }
+  showModal('📋', t('confirmTitle'), msg, [
+    { label: t('confirmTitle'), primary: true,  fn: doSubmit },
+    { label: t('continueSurvey'), primary: false, fn: closeModal }
   ]);
 }
 
@@ -1205,8 +1205,8 @@ function doSubmit() {
       updateFilledCount();
       showModal('❌', '提交失败',
         '错误：' + (err.message || err) + '<br>请检查网络后重试。', [
-        { label: '重试', primary: true,  fn: confirmSubmit },
-        { label: '取消', primary: false, fn: closeModal }
+        { label: t('retryBtn'), primary: true,  fn: confirmSubmit },
+        { label: t('cancelBtn'), primary: false, fn: closeModal }
       ]);
     })
     .submitCheckRecord(currentUser.name || currentUser.username, items);
@@ -1217,8 +1217,8 @@ function onSubmitDone(resp) {
     document.getElementById('submitBtn').disabled = false;
     updateFilledCount();
     showModal('❌', '提交失败', resp ? resp.error : '服务器无响应', [
-      { label: '重试', primary: true,  fn: confirmSubmit },
-      { label: '取消', primary: false, fn: closeModal }
+      { label: t('retryBtn'), primary: true,  fn: confirmSubmit },
+      { label: t('cancelBtn'), primary: false, fn: closeModal }
     ]);
     return;
   }
@@ -1239,17 +1239,17 @@ function onSubmitDone(resp) {
     }).join('');
     box.innerHTML =
       '<div class="success-anim">✅</div>' +
-      '<div class="modal-title" style="margin-bottom:8px">提交成功！</div>' +
-      '<div class="modal-msg">已记录 <b>' + saved + '</b> 件物品。</div>' +
+      '<div class="modal-title" style="margin-bottom:8px">' + t('successTitle') + '</div>' +
+      '<div class="modal-msg">' + t('successMsg').replace('%n', saved) + '</div>' +
       '<div style="font-size:13px;color:#e65100;font-weight:600;margin-bottom:6px">' +
-        '⚠️ 以下物品库存异常，已提醒管理员：</div>' +
+        '⚠️ ' + t('successAbnormal') + '</div>' +
       '<div class="abnormal-list">' + rows + '</div>' +
-      '<button class="modal-btn modal-btn-primary" onclick="goLogin()">完成</button>';
+      '<button class="modal-btn modal-btn-primary" onclick="goLogin()">' + t('confirmBtn') + '</button>';
     document.getElementById('modalOverlay').classList.add('show');
   } else {
-    showModal('', '提交成功！',
-      '已记录 <b>' + saved + '</b> 件盘点物品。今日任务完成！', [
-      { label: '完成', primary: true, fn: goLogin }
+    showModal('', t('successTitle'),
+      t('successMsg').replace('%n', saved), [
+      { label: t('confirmBtn'), primary: true, fn: goLogin }
     ], '🎉');
   }
 }
@@ -1297,10 +1297,10 @@ function doLogout() {
   } catch(e) {}
 
   if (hasDraft) {
-    showModal('⚠️', '确认退出？',
-      '您有未提交的草稿数据。<br>退出后草稿将保留，下次进入此页面仍可继续。', [
-      { label: '退出登录', primary: false, fn: _doLogout },
-      { label: '继续盘点', primary: true,  fn: closeModal }
+    showModal('⚠️', t('logoutTitle'),
+      t('logoutBody'), [
+      { label: t('logoutConfirm'), primary: false, fn: _doLogout },
+      { label: t('continueSurvey'), primary: true,  fn: closeModal }
     ]);
   } else {
     _doLogout();
