@@ -892,7 +892,7 @@ window.addEventListener('load', function() {
 // 加载物品
 // ══════════════════════════════════════════════
 function loadItems() {
-  showLoading('正在加载盘点物品...');
+  showLoading(t('loadingItems'));
   google.script.run
     .withSuccessHandler(onItemsLoaded)
     .withFailureHandler(function(err) {
@@ -908,7 +908,7 @@ function onItemsLoaded(resp) {
   }
   allItems = resp.items || [];
   if (allItems.length === 0) {
-    showEmpty('今日暂无分配给您的盘点任务');
+    showEmpty(t('noTasksToday'));
     updateProgress(0, 0);
     return;
   }
@@ -993,7 +993,7 @@ function renderItems(cat) {
   container.innerHTML = '';
   if (!list.length) {
     container.innerHTML = '<div class="empty-state"><div class="icon">📭</div>' +
-      '<div>该分类暂无物品</div></div>';
+      '<div>' + t('noCategoryItems') + '</div></div>';
     return;
   }
   list.forEach(function(item) { container.appendChild(makeCard(item)); });
@@ -1039,7 +1039,7 @@ function makeCard(item) {
     '<div class="item-name">' + escHtml(item.name) + '</div>' +
     '<div class="item-meta">' + escHtml(item.category || '') +
       (item.supplier ? ' · ' + escHtml(item.supplier) : '') + '</div>' +
-    '<div class="item-stock">现有: <span class="' + sClass + '">' + cur + '</span> ' +
+    '<div class="item-stock">' + t('currentStock') + ' <span class="' + sClass + '">' + cur + '</span> ' +
       escHtml(item.unit || '') + sLabel + '</div>';
 
   // 输入
@@ -1139,15 +1139,15 @@ function updateFilledCount() {
   var total  = allItems.length;
   var filled = countFilled();
   document.getElementById('filledCount').textContent =
-    '已填: ' + filled + ' / ' + total;
+    t('progressPrefix') + ' ' + filled + ' / ' + total;
   var btn = document.getElementById('submitBtn');
   btn.disabled = (filled === 0);
   if (filled > 0 && filled < total) {
-    btn.textContent = '提交盘点 (' + filled + '/' + total + ')';
+    btn.textContent = t('submitBtn') + ' (' + filled + '/' + total + ')';
   } else if (filled === total && total > 0) {
-    btn.textContent = '✅ 全部填完，提交 (' + total + ')';
+    btn.textContent = t('submitBtnAll') + ' (' + total + ')';
   } else {
-    btn.textContent = '提交盘点记录';
+    btn.textContent = t('submitBarLabel');
   }
 }
 
