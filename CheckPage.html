@@ -422,55 +422,55 @@
 <div class="add-item-overlay" id="addItemOverlay" onclick="closeAddItemOverlayBg(event)">
   <div class="add-item-sheet">
     <div class="ai-handle"></div>
-    <div class="ai-title">➕ 新增物品</div>
+    <div class="ai-title" data-zh="➕ 新增物品" data-my="➕ ပစ္စည်းအသစ် ထည့်ရန်">➕ 新增物品</div>
 
     <!-- 图片区 -->
     <div class="ai-photo-area" id="aiPhotoArea" onclick="triggerPhotoInput()">
       <img id="aiPhotoPreview" style="display:none">
       <div class="ai-photo-placeholder" id="aiPhotoPlaceholder">
         <div style="font-size:28px">📷</div>
-        <div>拍照 / 选图（可选）</div>
+        <div data-zh="拍照 / 选图（可选）" data-my="ဓာတ်ပုံ / ပုံရွေးရန်（ရွေးနိုင်）">拍照 / 选图（可选）</div>
       </div>
     </div>
     <input type="file" id="aiPhotoInput" accept="image/*" capture="environment"
            style="display:none" onchange="onPhotoSelected(this)">
 
     <!-- 物品名称 -->
-    <label class="ai-label">物品名称 <span style="color:#d32f2f">*</span></label>
-    <input id="ai_name" class="ai-input" type="text" placeholder="例：五花肉">
+    <label class="ai-label"><span data-zh="物品名称" data-my="ပစ္စည်းအမည်">物品名称</span> <span style="color:#d32f2f">*</span></label>
+    <input id="ai_name" class="ai-input" type="text" placeholder="例：五花肉" data-ph-zh="输入物品名称" data-ph-my="ပစ္စည်းအမည် ထည့်ပါ">
 
     <!-- 类别 -->
-    <label class="ai-label">类别 <span style="color:#d32f2f">*</span></label>
+    <label class="ai-label"><span data-zh="类别" data-my="အမျိုးအစား">类别</span> <span style="color:#d32f2f">*</span></label>
     <select id="ai_cat" class="ai-input"></select>
 
     <!-- 计量单位 -->
-    <label class="ai-label">计量单位 <span style="color:#d32f2f">*</span></label>
+    <label class="ai-label"><span data-zh="计量单位" data-my="တိုင်းတာသည့် ယူနစ်">计量单位</span> <span style="color:#d32f2f">*</span></label>
     <select id="ai_unit" class="ai-input" onchange="onUnitChange(this)">
-      <option value="kg">kg（公斤）</option>
-      <option value="g">g（克）</option>
-      <option value="包">包</option>
-      <option value="盒">盒</option>
-      <option value="瓶">瓶</option>
-      <option value="桶">桶</option>
-      <option value="箱">箱</option>
-      <option value="袋">袋</option>
-      <option value="份">份</option>
-      <option value="条">条</option>
-      <option value="罐">罐</option>
-      <option value="升">升（L）</option>
-      <option value="毫升">毫升（mL）</option>
-      <option value="个">个</option>
-      <option value="片">片</option>
+      <option value="kg" data-zh="kg（公斤）" data-my="kg（ကီလိုဂရမ်）">kg（公斤）</option>
+      <option value="g" data-zh="g（克）" data-my="g（ဂရမ်）">g（克）</option>
+      <option value="包" data-zh="包" data-my="ထုပ်">包</option>
+      <option value="盒" data-zh="盒" data-my="သေတ္တာ">盒</option>
+      <option value="瓶" data-zh="瓶" data-my="ပုလင်း">瓶</option>
+      <option value="桶" data-zh="桶" data-my="ပုံး">桶</option>
+      <option value="箱" data-zh="箱" data-my="ဘောက်စ်">箱</option>
+      <option value="袋" data-zh="袋" data-my="အိတ်">袋</option>
+      <option value="份" data-zh="份" data-my="ဆာဗစ်">份</option>
+      <option value="条" data-zh="条" data-my="ချောင်း">条</option>
+      <option value="罐" data-zh="罐" data-my="ဘူး">罐</option>
+      <option value="升" data-zh="升（L）" data-my="လီတာ（L）">升（L）</option>
+      <option value="毫升" data-zh="毫升（mL）" data-my="မီလီလီတာ（mL）">毫升（mL）</option>
+      <option value="个" data-zh="个" data-my="ခု">个</option>
+      <option value="片" data-zh="片" data-my="ချပ်">片</option>
     </select>
 
     <!-- 每包件数（仅当选包装单位时显示） -->
     <div id="aiPkgRow" style="display:none">
-      <label class="ai-label">每包件数 <span style="color:#d32f2f">*</span></label>
-      <input id="ai_pkg_qty" class="ai-input" type="number" min="1" placeholder="例：10">
+      <label class="ai-label"><span data-zh="每包件数" data-my="တစ်ထုပ်လျှင် အရေအတွက်">每包件数</span> <span style="color:#d32f2f">*</span></label>
+      <input id="ai_pkg_qty" class="ai-input" type="number" min="1" placeholder="例：10" data-ph-zh="例:10" data-ph-my="ဥပမာ:10">
     </div>
 
-    <button id="addItemSaveBtn" class="ai-save-btn" onclick="saveNewItem()">+ 添加物品</button>
-    <button class="ai-cancel-btn" onclick="closeAddItemOverlayDirect()">取消</button>
+    <button id="addItemSaveBtn" class="ai-save-btn" onclick="saveNewItem()" data-zh="+ 添加物品" data-my="+ ပစ္စည်းထည့်ရန်">+ 添加物品</button>
+    <button class="ai-cancel-btn" onclick="closeAddItemOverlayDirect()" data-zh="取消" data-my="ပယ်ဖျက်ရန်">取消</button>
   </div>
 </div>
 
