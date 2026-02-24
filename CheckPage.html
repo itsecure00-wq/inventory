@@ -306,6 +306,31 @@
       background: #f5f5f5; color: #616161; border: none;
       border-radius: 10px; font-size: 14px; cursor: pointer;
     }
+
+    /* ── 图片 lightbox ── */
+    #imgLightbox {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.88);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    #imgLightbox.show { display: flex; }
+    #imgLightbox img {
+      max-width: 100%; max-height: 75vh;
+      border-radius: 10px; object-fit: contain;
+      box-shadow: 0 4px 24px rgba(0,0,0,.5);
+    }
+    #imgLightboxName {
+      color: #fff; font-size: 16px; font-weight: 600;
+      margin-top: 14px; text-align: center;
+    }
+    #imgLightboxClose {
+      position: absolute; top: 16px; right: 20px;
+      color: #fff; font-size: 28px; cursor: pointer;
+      line-height: 1; opacity: .8;
+    }
+    .item-photo img { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -362,6 +387,13 @@
 
 <!-- 添加物品 FAB -->
 <button class="add-item-fab" id="addItemFab" onclick="openAddItemModal()">＋</button>
+
+<!-- 图片放大 Lightbox -->
+<div id="imgLightbox" onclick="closeImgLightbox()">
+  <span id="imgLightboxClose" onclick="closeImgLightbox()">✕</span>
+  <img id="imgLightboxImg" src="" alt="">
+  <div id="imgLightboxName"></div>
+</div>
 
 <!-- 添加物品 Sheet Modal -->
 <div class="add-item-overlay" id="addItemOverlay" onclick="closeAddItemOverlayBg(event)">
@@ -451,6 +483,17 @@ function parsePermissions(permStr, role) {
 }
 function navigateTo(page) {
   window.top.location.href = APP_URL + '?page=' + page;
+}
+
+// ── 图片 lightbox ──
+function showImgLightbox(src, name) {
+  document.getElementById('imgLightboxImg').src = src;
+  document.getElementById('imgLightboxName').textContent = name;
+  document.getElementById('imgLightbox').classList.add('show');
+}
+function closeImgLightbox() {
+  document.getElementById('imgLightbox').classList.remove('show');
+  document.getElementById('imgLightboxImg').src = '';
 }
 
 // ══════════════════════════════════════════════
@@ -784,6 +827,10 @@ function makeCard(item) {
     img.src = item.imageUrl;
     img.loading = 'lazy';
     img.alt = item.name;
+    img.title = item.name;
+    img.onclick = (function(s, n) {
+      return function(e) { e.stopPropagation(); showImgLightbox(s, n); };
+    })(item.imageUrl, item.name);
     img.onerror = function() { photoDiv.textContent = catEmoji(item.category); };
     photoDiv.appendChild(img);
   } else {
