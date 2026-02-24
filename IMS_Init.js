@@ -143,3 +143,27 @@ function initIMS() {
     '总计 6 个工作表'
   );
 }
+
+// ============================================================
+// initStaff() — 初始化 Staff_DB，确保 admin 账号存在
+// 在 GAS 编辑器中手动运行一次即可
+// ============================================================
+function initStaff() {
+  var ss = SpreadsheetApp.openById(IMS_CONFIG.SS_ID);
+  var sheet = ss.getSheetByName('Staff_DB');
+  if (!sheet) {
+    sheet = ss.insertSheet('Staff_DB');
+    sheet.getRange(1, 1, 1, 5).setValues([['Username','Password','Role','Permissions','Name']]);
+  }
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim().toLowerCase() === 'admin') {
+      Logger.log('Admin 账号已存在，跳过创建');
+      Browser.msgBox('✅ Admin 账号已存在（' + data[i][0] + '），无需重新创建。');
+      return;
+    }
+  }
+  sheet.appendRow(['admin', '1234', 'Boss', '', 'Admin']);
+  Logger.log('Admin 账号已创建');
+  Browser.msgBox('✅ Admin 账号已创建！\n用户名: admin\n密码: 1234\n角色: Boss');
+}
