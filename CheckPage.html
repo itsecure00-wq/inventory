@@ -757,7 +757,7 @@ function openAddItemModal() {
   });
   catList.forEach(function(c) {
     var opt = document.createElement('option');
-    opt.value = c; opt.textContent = c;
+    opt.value = c; opt.textContent = CAT_KEYS[c] ? t(CAT_KEYS[c]) : c;
     catSel.appendChild(opt);
   });
 
