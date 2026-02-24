@@ -616,7 +616,7 @@ function applyLang() {
   if (btn) btn.textContent = currentLang === 'zh' ? 'မြ' : '中';
   // 4. Re-apply dynamic UI if items are loaded
   if (typeof allItems !== 'undefined' && allItems.length) {
-    updateProgress();
+    updateProgress(-1, -1);
     updateFilledCount();
     renderItems(currentCat);
   }
