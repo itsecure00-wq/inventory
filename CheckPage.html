@@ -447,13 +447,26 @@ function parsePermissions(permStr, role) {
   return ROLE_DEFAULT_PERMS[role] || { pages: ['check'], adminTabs: [] };
 }
 function navigateTo(page) {
-  google.script.run.withSuccessHandler(function(url) {
-    var a = document.createElement('a');
-    a.href = url + '?page=' + page;
-    a.target = '_top';
-    document.body.appendChild(a);
-    a.click();
-  }).getAppUrl();
+  showLoading('正在跳转...');
+  google.script.run
+    .withSuccessHandler(function(url) {
+      var a = document.createElement('a');
+      a.href = url + '?page=' + page;
+      a.target = '_top';
+      document.body.appendChild(a);
+      a.click();
+    })
+    .withFailureHandler(function(err) {
+      var el = document.getElementById('statusArea');
+      el.style.display = 'block';
+      document.getElementById('itemsList').style.display = 'none';
+      el.innerHTML =
+        '<div style="font-size:36px;margin-bottom:12px">⚠️</div>' +
+        '<div style="color:#d32f2f;margin-bottom:16px">网络连接失败，请刷新重试</div>' +
+        '<button onclick="location.reload()" style="padding:9px 20px;background:#d32f2f;' +
+        'color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">刷新页面</button>';
+    })
+    .getAppUrl();
 }
 
 // ══════════════════════════════════════════════
@@ -785,6 +798,7 @@ function makeCard(item) {
   if (item.imageUrl && item.imageUrl.match(/^https?:\/\//)) {
     var img = document.createElement('img');
     img.src = item.imageUrl;
+    img.loading = 'lazy';
     img.alt = item.name;
     img.onerror = function() { photoDiv.textContent = catEmoji(item.category); };
     photoDiv.appendChild(img);
@@ -1044,13 +1058,26 @@ function closeModal() {
 // 导航
 // ══════════════════════════════════════════════
 function goLogin() {
-  google.script.run.withSuccessHandler(function(url) {
-    var a = document.createElement('a');
-    a.href = url + '?page=login';
-    a.target = '_top';
-    document.body.appendChild(a);
-    a.click();
-  }).getAppUrl();
+  showLoading('正在跳转到登录页...');
+  google.script.run
+    .withSuccessHandler(function(url) {
+      var a = document.createElement('a');
+      a.href = url + '?page=login';
+      a.target = '_top';
+      document.body.appendChild(a);
+      a.click();
+    })
+    .withFailureHandler(function(err) {
+      var el = document.getElementById('statusArea');
+      el.style.display = 'block';
+      document.getElementById('itemsList').style.display = 'none';
+      el.innerHTML =
+        '<div style="font-size:36px;margin-bottom:12px">⚠️</div>' +
+        '<div style="color:#d32f2f;margin-bottom:16px">网络连接失败，请刷新重试</div>' +
+        '<button onclick="location.reload()" style="padding:9px 20px;background:#d32f2f;' +
+        'color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">刷新页面</button>';
+    })
+    .getAppUrl();
 }
 
 function doLogout() {
