@@ -1,0 +1,14 @@
+# Node.js local build/utility scripts — NOT for GAS
+boot.js
+build_i18n.js
+write_i18n.js
+step1.js
+
+# Local/docs files
+README.md
+testfile.txt
+anchor_check.txt
+payload.json
+docs/
+*.py
+*.bak
