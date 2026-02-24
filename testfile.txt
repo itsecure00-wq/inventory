@@ -1,0 +1,2 @@
+line with single quote: it's test
+target_path = r'C:\Users\Pei Shee\Documents\code\inventory-ims\CheckPage.html'
