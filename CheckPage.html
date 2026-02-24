@@ -681,6 +681,7 @@ function closeImgLightbox() {
   document.getElementById('imgLightboxImg').src = '';
 }
 window.addEventListener('load', function() {
+  applyLang();
   document.getElementById('imgLightboxImg').addEventListener('click', function(e) {
     e.stopPropagation();
   });
@@ -914,6 +915,7 @@ function onItemsLoaded(resp) {
   }
   buildCatTabs();
   renderItems(currentCat);
+  applyLang();
   restoreDrafts();
   updateFilledCount();
   updateProgress(-1, -1);   // auto-calc
