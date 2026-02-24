@@ -82,8 +82,10 @@ function doGet(e) {
       default: fileName = 'Login'; break;
     }
 
-    // 直接用 createHtmlOutputFromFile，保留 google.script.run 桥接
-    return HtmlService.createHtmlOutputFromFile(fileName)
+    // 用模板注入 APP_URL，避免客户端异步获取 URL 导致移动端 redirect blocked
+    var tpl = HtmlService.createTemplateFromFile(fileName);
+    tpl.appUrl = ScriptApp.getService().getUrl();
+    return tpl.evaluate()
       .setTitle('GLOBAL CHAIN F&B SDN. BHD. · 库存管理')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1');

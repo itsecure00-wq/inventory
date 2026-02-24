@@ -420,6 +420,9 @@
 </div>
 
 <script>
+// 由服务端注入，避免客户端异步 getAppUrl() 导致移动端 redirect blocked
+var APP_URL = '<?= appUrl ?>';
+
 // ══════════════════════════════════════════════
 // Storage 辅助
 // ══════════════════════════════════════════════
@@ -447,22 +450,7 @@ function parsePermissions(permStr, role) {
   return ROLE_DEFAULT_PERMS[role] || { pages: ['check'], adminTabs: [] };
 }
 function navigateTo(page) {
-  showLoading('正在跳转...');
-  google.script.run
-    .withSuccessHandler(function(url) {
-      window.top.location.href = url + '?page=' + page;
-    })
-    .withFailureHandler(function(err) {
-      var el = document.getElementById('statusArea');
-      el.style.display = 'block';
-      document.getElementById('itemsList').style.display = 'none';
-      el.innerHTML =
-        '<div style="font-size:36px;margin-bottom:12px">⚠️</div>' +
-        '<div style="color:#d32f2f;margin-bottom:16px">网络连接失败，请刷新重试</div>' +
-        '<button onclick="location.reload()" style="padding:9px 20px;background:#d32f2f;' +
-        'color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">刷新页面</button>';
-    })
-    .getAppUrl();
+  window.top.location.href = APP_URL + '?page=' + page;
 }
 
 // ══════════════════════════════════════════════
@@ -1054,22 +1042,7 @@ function closeModal() {
 // 导航
 // ══════════════════════════════════════════════
 function goLogin() {
-  showLoading('正在跳转到登录页...');
-  google.script.run
-    .withSuccessHandler(function(url) {
-      window.top.location.href = url + '?page=login';
-    })
-    .withFailureHandler(function(err) {
-      var el = document.getElementById('statusArea');
-      el.style.display = 'block';
-      document.getElementById('itemsList').style.display = 'none';
-      el.innerHTML =
-        '<div style="font-size:36px;margin-bottom:12px">⚠️</div>' +
-        '<div style="color:#d32f2f;margin-bottom:16px">网络连接失败，请刷新重试</div>' +
-        '<button onclick="location.reload()" style="padding:9px 20px;background:#d32f2f;' +
-        'color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">刷新页面</button>';
-    })
-    .getAppUrl();
+  window.top.location.href = APP_URL + '?page=login';
 }
 
 function doLogout() {

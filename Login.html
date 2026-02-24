@@ -65,6 +65,9 @@
 </div>
 
 <script>
+  // 由服务端注入，避免客户端异步 getAppUrl() 导致移动端 redirect blocked
+  var APP_URL = '<?= appUrl ?>';
+
   var loginAttempts = 0;
   var lockUntil = 0;
 
@@ -186,19 +189,8 @@
       document.getElementById('btnSpinner').style.display = 'none';
       return;
     }
-    var targetPage = page;
-    google.script.run
-      .withSuccessHandler(function(url) {
-        window.top.location.href = url + '?page=' + targetPage;
-      })
-      .withFailureHandler(function(err) {
-        document.getElementById('errorMsg').textContent = '跳转失败: ' + (err.message || err);
-        document.getElementById('errorMsg').style.display = 'block';
-        document.getElementById('btnLogin').disabled = false;
-        document.getElementById('btnText').textContent = '登 录';
-        document.getElementById('btnSpinner').style.display = 'none';
-      })
-      .getAppUrl();
+    // APP_URL 由服务端注入，直接同步跳转，不需要 getAppUrl() 异步调用
+    window.top.location.href = APP_URL + '?page=' + page;
   }
 </script>
 

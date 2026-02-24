@@ -282,6 +282,9 @@
 </div>
 
 <script>
+// 由服务端注入，避免客户端异步 getAppUrl() 导致移动端 redirect blocked
+var APP_URL = '<?= appUrl ?>';
+
 // ══════════════════════════════════════════════
 // Storage 辅助
 // ══════════════════════════════════════════════
@@ -637,9 +640,7 @@ function sendWhatsApp() {
 // 导航
 // ══════════════════════════════════════════════
 function navigateTo(page) {
-  google.script.run.withSuccessHandler(function(url) {
-    window.top.location.href = url + '?page=' + page;
-  }).getAppUrl();
+  window.top.location.href = APP_URL + '?page=' + page;
 }
 function goLogin() {
   lsDel('ims_user');
