@@ -331,6 +331,12 @@
       line-height: 1; opacity: .8;
     }
     .item-photo img { cursor: pointer; }
+
+    /* ── 手机专属功能：桌面隐藏增加物品按鈕 ── */
+    @media (min-width: 769px) {
+      .add-item-fab  { display: none !important; }
+      #addItemTopBtn { display: none !important; }
+    }
   </style>
 </head>
 <body>
