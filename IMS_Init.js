@@ -167,3 +167,26 @@ function initStaff() {
   Logger.log('Admin 账号已创建');
   Browser.msgBox('✅ Admin 账号已创建！\n用户名: admin\n密码: 1234\n角色: Boss');
 }
+
+// ============================================================
+// resetAdminPwd() — 将 admin 账号密码重置为 1234
+// 在 GAS 编辑器中手动运行一次即可
+// ============================================================
+function resetAdminPwd() {
+  var ss = SpreadsheetApp.openById(IMS_CONFIG.SS_ID);
+  var sheet = ss.getSheetByName('Staff_DB');
+  if (!sheet) {
+    Browser.msgBox('❌ Staff_DB 表不存在，请先运行 initStaff()');
+    return;
+  }
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim().toLowerCase() === 'admin') {
+      sheet.getRange(i + 1, 2).setValue('1234');
+      Logger.log('Admin 密码已重置为 1234');
+      Browser.msgBox('✅ Admin 密码已重置为 1234\n请返回登录页，使用 admin / 1234 登录');
+      return;
+    }
+  }
+  Browser.msgBox('❌ 找不到 admin 账号，请先运行 initStaff()');
+}
