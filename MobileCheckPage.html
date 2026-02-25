@@ -494,6 +494,7 @@
   function showLogin() {
     document.getElementById('loginView').style.display  = 'flex';
     document.getElementById('checkView').style.display  = 'none';
+    document.getElementById('addItemFab').style.display = 'none';  // belt-and-suspenders: hide FAB on login view
   }
 
   /* Enter key triggers login */
@@ -568,10 +569,12 @@
     document.getElementById('checkView').style.display  = 'block';
     document.getElementById('staffLabel').textContent   =
       (currentUser.name || currentUser.username) + ' · ' + (currentUser.role || '员工');
-    // Show add-item FAB for Manager/Boss
+    // Always reset FAB first, then show only for Manager/Boss
+    var _fab = document.getElementById('addItemFab');
+    _fab.style.display = 'none';
     var _role = String(currentUser.role || '').trim().toLowerCase();
     if (_role === 'manager' || _role === 'boss') {
-      document.getElementById('addItemFab').style.display = 'flex';
+      _fab.style.display = 'flex';
     }
     // Item loading is handled by the caller (loadItemsWithCache or onLoginResult)
   }
