@@ -104,6 +104,11 @@ function checkRole_(username, allowedRoles) {
  */
 function getTodayCheckItems(staffName) {
   try {
+    var _cache = CacheService.getScriptCache();
+    var _ckey = 'checkItems_' + String(staffName);
+    var _cached = _cache.get(_ckey);
+    if (_cached) { try { return JSON.parse(_cached); } catch(e) {} }
+
     var ss = getIMSSS_();
     var itemSheet = ss.getSheetByName(IMS_CONFIG.SHEETS.ITEMS);
     var staffSheet = ss.getSheetByName(IMS_CONFIG.SHEETS.STAFF);
@@ -185,7 +190,7 @@ function getTodayCheckItems(staffName) {
       }
     }
 
-    return {
+    var _result = {
       success: true,
       staffName: staffDisplayName,
       date: today,
@@ -196,6 +201,8 @@ function getTodayCheckItems(staffName) {
       skippedCategories: skipped,
       assignedCats: assignedCats
     };
+    try { _cache.put(_ckey, JSON.stringify(_result), 60); } catch(e) {}
+    return _result;
 
   } catch (e) {
     Logger.log('getTodayCheckItems error: ' + e.message);
@@ -288,6 +295,9 @@ function submitCheckRecord(staffName, items) {
     for (var k = 0; k < abnormalItems.length; k++) {
       try { sendAbnormalAlert(abnormalItems[k].name, abnormalItems[k].oldQty, abnormalItems[k].newQty); } catch (e) {}
     }
+
+    // 清除仪表板缓存（新数据已写入）
+    try { CacheService.getScriptCache().removeAll(['dashboardAll', 'checkItems_' + String(staffName)]); } catch(e) {}
 
     return {
       success: true,
@@ -501,6 +511,10 @@ function getStockDashboard() {
  */
 function getDashboardAll() {
   try {
+    var _cache = CacheService.getScriptCache();
+    var _cached = _cache.get('dashboardAll');
+    if (_cached) { try { return JSON.parse(_cached); } catch(e) {} }
+
     var ss = getIMSSS_();
     var itemSheet  = ss.getSheetByName(IMS_CONFIG.SHEETS.ITEMS);
     var checkSheet = ss.getSheetByName(IMS_CONFIG.SHEETS.CHECKS);
@@ -652,7 +666,7 @@ function getDashboardAll() {
       return { date: d, staff: Object.keys(h.staffSet).join(', '), itemCount: h.itemCount, abnormalCount: h.abnormalCount };
     });
 
-    return {
+    var _dashResult = {
       success: true,
       date: today,
       branch: IMS_CONFIG.BRANCH,
@@ -670,6 +684,8 @@ function getDashboardAll() {
       poList: poList,
       recentHistory: recentHistory
     };
+    try { _cache.put('dashboardAll', JSON.stringify(_dashResult), 90); } catch(e) {}
+    return _dashResult;
 
   } catch (e) {
     Logger.log('getDashboardAll error: ' + e.message);

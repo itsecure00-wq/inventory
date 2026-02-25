@@ -189,8 +189,12 @@
       document.getElementById('btnSpinner').style.display = 'none';
       return;
     }
-    // APP_URL 由服务端注入，直接同步跳转，不需要 getAppUrl() 异步调用
-    window.top.location.href = APP_URL + '?page=' + page;
+    // APP_URL 由服务端注入，用 <a target="_top"> 跳转避免移动端 redirect blocked
+    var _a = document.createElement('a');
+    _a.href = APP_URL + '?page=' + page;
+    _a.target = '_top';
+    document.body.appendChild(_a);
+    _a.click();
   }
 </script>
 

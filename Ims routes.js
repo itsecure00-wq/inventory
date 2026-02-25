@@ -181,24 +181,29 @@ function getAppUrl() {
  */
 function verifyStaff(username, password) {
   try {
-    var sheet = SpreadsheetApp.openById(IMS_CONFIG.SS_ID).getSheetByName('Staff_DB');
-    var data = sheet.getDataRange().getValues();
-    
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get('staffList');
+    var data;
+    if (cached) {
+      data = JSON.parse(cached);
+    } else {
+      var sheet = SpreadsheetApp.openById(IMS_CONFIG.SS_ID).getSheetByName('Staff_DB');
+      data = sheet.getDataRange().getValues();
+      try { cache.put('staffList', JSON.stringify(data), 60); } catch(e) {}
+    }
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][0]).trim() === String(username).trim() && 
+      if (String(data[i][0]).trim() === String(username).trim() &&
           String(data[i][1]).trim() === String(password).trim()) {
         return {
           success: true,
           username: String(data[i][0]),
-          role: data[i][2],        // Boss/Manager/Staff
-          permissions: data[i][3], // 权限
-          name: data[i][4]         // 真实姓名
+          role: String(data[i][2] || '').trim(),   // Boss/Manager/Staff
+          permissions: data[i][3],                  // 权限
+          name: data[i][4]                          // 真实姓名
         };
       }
     }
-    
     return { success: false, error: '用户名或密码错误' };
-    
   } catch (e) {
     Logger.log('verifyStaff error: ' + e.message);
     return { success: false, error: '系统错误: ' + e.message };

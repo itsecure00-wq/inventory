@@ -689,7 +689,11 @@ function parsePermissions(permStr, role) {
   return ROLE_DEFAULT_PERMS[role] || { pages: ['check'], adminTabs: [] };
 }
 function navigateTo(page) {
-  window.top.location.href = APP_URL + '?page=' + page;
+  var a = document.createElement('a');
+  a.href = APP_URL + '?page=' + page;
+  a.target = '_top';
+  document.body.appendChild(a);
+  a.click();
 }
 
 // ── 图片 lightbox ──
@@ -902,8 +906,9 @@ window.addEventListener('load', function() {
   document.getElementById('staffLabel').textContent =
     '👤 ' + (currentUser.name || currentUser.username);
 
-  // 显示「+ 物品」按钮（仅 Manager/Boss）
-  if (currentUser.role === 'Manager' || currentUser.role === 'Boss') {
+  // 显示「+ 物品」按钮（仅 Manager/Boss，大小写不敏感）
+  var _role = String(currentUser.role || '').trim().toLowerCase();
+  if (_role === 'manager' || _role === 'boss') {
     document.getElementById('addItemFab').style.display    = 'flex';
     document.getElementById('addItemTopBtn').style.display = '';
   }
@@ -1308,7 +1313,11 @@ function closeModal() {
 // 导航
 // ══════════════════════════════════════════════
 function goLogin() {
-  window.top.location.href = APP_URL + '?page=login';
+  var a = document.createElement('a');
+  a.href = APP_URL + '?page=login';
+  a.target = '_top';
+  document.body.appendChild(a);
+  a.click();
 }
 
 function doLogout() {
