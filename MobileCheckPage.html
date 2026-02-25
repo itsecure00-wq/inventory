@@ -212,6 +212,64 @@
       padding: 10px 24px; font-size: 14px; cursor: pointer;
       width: 100%; margin-top: 8px;
     }
+    /* ── Add-item FAB ── */
+    .add-item-fab {
+      position: fixed; bottom: 88px; right: 16px; z-index: 150;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: #37474f; color: #fff;
+      border: none; font-size: 26px; line-height: 1;
+      box-shadow: 0 3px 8px rgba(0,0,0,.35);
+      cursor: pointer; display: none;
+    }
+
+    /* ── Add-item sheet modal ── */
+    .add-item-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.45);
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    .add-item-overlay.show { display: flex; }
+    .add-item-sheet {
+      background: #fff; width: 100%; max-width: 480px;
+      border-radius: 18px 18px 0 0;
+      padding: 14px 20px 40px; max-height: 90vh; overflow-y: auto;
+    }
+    .ai-handle { width: 40px; height: 4px; border-radius: 2px; background: #ddd; margin: 0 auto 14px; }
+    .ai-title  { font-size: 17px; font-weight: 700; color: #212121; margin-bottom: 18px; text-align: center; }
+    .ai-photo-area {
+      width: 100%; height: 110px;
+      border: 2px dashed #bdbdbd; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; margin-bottom: 4px;
+      background: #fafafa; overflow: hidden;
+    }
+    .ai-photo-area img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+    .ai-photo-placeholder { font-size: 13px; color: #757575; text-align: center; }
+    .ai-label { font-size: 12px; color: #757575; margin: 10px 0 4px; display: block; }
+    .ai-input {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      font-size: 15px; color: #212121; background: #fafafa; margin-bottom: 2px;
+    }
+    .ai-input:focus { outline: none; border-color: #37474f; background: #fff; }
+    .ai-save-btn {
+      width: 100%; padding: 13px; margin-top: 20px;
+      background: #37474f; color: #fff; border: none;
+      border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
+    }
+    .ai-save-btn:disabled { background: #9e9e9e; cursor: not-allowed; }
+    .ai-cancel-btn {
+      width: 100%; padding: 11px; margin-top: 8px;
+      background: #f5f5f5; color: #616161; border: none;
+      border-radius: 8px; font-size: 14px; cursor: pointer;
+    }
+    /* Toast */
+    #mcToast {
+      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,.78); color: #fff;
+      padding: 9px 18px; border-radius: 20px; font-size: 13px;
+      white-space: nowrap; z-index: 300; display: none;
+    }
   </style>
 </head>
 <body>
@@ -291,6 +349,63 @@
   </div>
 
 </div>
+
+<!-- Add-item FAB (Manager/Boss only) -->
+<button class="add-item-fab" id="addItemFab" onclick="openAddItemModal()">＋</button>
+
+<!-- Add-item sheet modal -->
+<div class="add-item-overlay" id="addItemOverlay" onclick="closeAddItemOverlayBg(event)">
+  <div class="add-item-sheet">
+    <div class="ai-handle"></div>
+    <div class="ai-title">➕ 新增物品</div>
+    <!-- Photo -->
+    <div class="ai-photo-area" id="aiPhotoArea" onclick="triggerPhotoInput()">
+      <img id="aiPhotoPreview" style="display:none">
+      <div class="ai-photo-placeholder" id="aiPhotoPlaceholder">
+        <div style="font-size:28px">📷</div>
+        <div>拍照 / 选图（可选）</div>
+      </div>
+    </div>
+    <input type="file" id="aiPhotoInput" accept="image/*" capture="environment"
+           style="display:none" onchange="onPhotoSelected(this)">
+    <!-- Name -->
+    <label class="ai-label">物品名称 <span style="color:#d32f2f">*</span></label>
+    <input id="ai_name" class="ai-input" type="text" placeholder="例：五花肉">
+    <!-- Category -->
+    <label class="ai-label">类别 <span style="color:#d32f2f">*</span></label>
+    <select id="ai_cat" class="ai-input"></select>
+    <!-- Unit -->
+    <label class="ai-label">计量单位 <span style="color:#d32f2f">*</span></label>
+    <select id="ai_unit" class="ai-input" onchange="onUnitChange(this)">
+      <option value="kg">kg（公斤）</option>
+      <option value="g">g（克）</option>
+      <option value="包">包</option>
+      <option value="盒">盒</option>
+      <option value="瓶">瓶</option>
+      <option value="桶">桶</option>
+      <option value="箱">箱</option>
+      <option value="袋">袋</option>
+      <option value="份">份</option>
+      <option value="条">条</option>
+      <option value="罐">罐</option>
+      <option value="升">升（L）</option>
+      <option value="毫升">毫升（mL）</option>
+      <option value="个">个</option>
+      <option value="片">片</option>
+      <option value="支">支</option>
+    </select>
+    <!-- Pkg qty (shown only for pkg units) -->
+    <div id="aiPkgRow" style="display:none">
+      <label class="ai-label">每包件数 <span style="color:#d32f2f">*</span></label>
+      <input id="ai_pkg_qty" class="ai-input" type="number" min="1" placeholder="例：10">
+    </div>
+    <button id="addItemSaveBtn" class="ai-save-btn" onclick="saveNewItem()">+ 添加物品</button>
+    <button class="ai-cancel-btn" onclick="closeAddItemOverlayDirect()">取消</button>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="mcToast"></div>
 
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModalOverlay(event)">
@@ -403,6 +518,11 @@
     document.getElementById('checkView').style.display  = 'block';
     document.getElementById('staffLabel').textContent   =
       (currentUser.name || currentUser.username) + ' · ' + (currentUser.role || '员工');
+    // Show add-item FAB for Manager/Boss
+    var _role = String(currentUser.role || '').trim().toLowerCase();
+    if (_role === 'manager' || _role === 'boss') {
+      document.getElementById('addItemFab').style.display = 'flex';
+    }
     loadItems();
   }
 
@@ -760,6 +880,138 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  /* ════════════════════════════════
+     ADD ITEM (Manager/Boss only)
+  ════════════════════════════════ */
+  var PKG_UNITS = ['包','盒','箱','袋'];
+  var pendingPhotoBase64 = null, pendingPhotoMime = null, pendingPhotoName = null;
+
+  function onUnitChange(sel) {
+    var show = PKG_UNITS.indexOf(sel.value) >= 0;
+    document.getElementById('aiPkgRow').style.display = show ? '' : 'none';
+    if (!show) document.getElementById('ai_pkg_qty').value = '';
+  }
+
+  function triggerPhotoInput() {
+    document.getElementById('aiPhotoInput').click();
+  }
+
+  function onPhotoSelected(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      var parts   = dataUrl.split(',');
+      pendingPhotoBase64 = parts[1];
+      pendingPhotoMime   = file.type;
+      pendingPhotoName   = file.name;
+      var preview = document.getElementById('aiPhotoPreview');
+      preview.src = dataUrl;
+      preview.style.display = 'block';
+      document.getElementById('aiPhotoPlaceholder').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function openAddItemModal() {
+    // Reset photo
+    pendingPhotoBase64 = pendingPhotoMime = pendingPhotoName = null;
+    document.getElementById('aiPhotoPreview').style.display     = 'none';
+    document.getElementById('aiPhotoPreview').src               = '';
+    document.getElementById('aiPhotoPlaceholder').style.display = 'flex';
+    document.getElementById('aiPhotoInput').value               = '';
+    // Reset fields
+    document.getElementById('ai_name').value          = '';
+    document.getElementById('ai_unit').selectedIndex  = 0;
+    document.getElementById('aiPkgRow').style.display = 'none';
+    document.getElementById('ai_pkg_qty').value       = '';
+    // Populate category select
+    var catSel = document.getElementById('ai_cat');
+    catSel.innerHTML = '';
+    var defaultCats = ['肉类','菜类','海鲜','调料','饮料','主食',
+      '蘸料','油料','冷冻','干货','丸子','锅底','甜品','酒水','小吃','消耗品','餐具','其他'];
+    var merged = {};
+    defaultCats.forEach(function(c){ merged[c] = 1; });
+    allItems.forEach(function(it){ if (it.category) merged[it.category] = 1; });
+    var catList = Object.keys(merged).sort(function(a, b) {
+      var ia = defaultCats.indexOf(a), ib = defaultCats.indexOf(b);
+      if (ia >= 0 && ib >= 0) return ia - ib;
+      if (ia >= 0) return -1; if (ib >= 0) return 1;
+      return a.localeCompare(b);
+    });
+    catList.forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = opt.textContent = c;
+      catSel.appendChild(opt);
+    });
+    // Reset button
+    var btn = document.getElementById('addItemSaveBtn');
+    btn.disabled = false; btn.textContent = '+ 添加物品';
+    document.getElementById('addItemOverlay').classList.add('show');
+  }
+
+  function saveNewItem() {
+    var name     = document.getElementById('ai_name').value.trim();
+    var cat      = document.getElementById('ai_cat').value;
+    var unitBase = document.getElementById('ai_unit').value;
+    var pkgQty   = document.getElementById('ai_pkg_qty').value.trim();
+    if (!name) { showToast('请填写物品名称'); return; }
+    var unit = unitBase;
+    if (PKG_UNITS.indexOf(unitBase) >= 0) {
+      if (!pkgQty || Number(pkgQty) < 1) { showToast('请填写每包件数'); return; }
+      unit = unitBase + '(' + pkgQty + '件)';
+    }
+    var btn = document.getElementById('addItemSaveBtn');
+    btn.disabled = true; btn.textContent = '保存中...';
+
+    function doCreate(imageUrl) {
+      google.script.run
+        .withSuccessHandler(function(resp) {
+          btn.disabled = false; btn.textContent = '+ 添加物品';
+          if (resp && resp.success) {
+            closeAddItemOverlayDirect();
+            showToast('✅ 已添加：' + name);
+            loadItems(); // refresh list
+          } else {
+            showToast('❌ ' + ((resp && resp.error) || '添加失败'));
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false; btn.textContent = '+ 添加物品';
+          showToast('❌ ' + (err.message || '网络错误'));
+        })
+        .createItem(currentUser.username, { name: name, category: cat, unit: unit, imageUrl: imageUrl || '' });
+    }
+
+    if (pendingPhotoBase64) {
+      google.script.run
+        .withSuccessHandler(function(resp) {
+          doCreate(resp && resp.success ? resp.url : '');
+        })
+        .withFailureHandler(function() { doCreate(''); })
+        .uploadItemPhoto(currentUser.username, pendingPhotoBase64, pendingPhotoMime, pendingPhotoName);
+    } else {
+      doCreate('');
+    }
+  }
+
+  function closeAddItemOverlayBg(evt) {
+    if (evt.target === document.getElementById('addItemOverlay')) closeAddItemOverlayDirect();
+  }
+  function closeAddItemOverlayDirect() {
+    document.getElementById('addItemOverlay').classList.remove('show');
+  }
+
+  var _toastTimer = null;
+  function showToast(msg) {
+    var el = document.getElementById('mcToast');
+    el.textContent   = msg;
+    el.style.display = 'block';
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function() { el.style.display = 'none'; }, 2800);
   }
 </script>
 </body>
