@@ -76,10 +76,11 @@ function doGet(e) {
   try {
     var fileName;
     switch (page) {
-      case 'check': fileName = 'CheckPage'; break;
+      case 'check':    fileName = 'CheckPage';       break;
+      case 'mcheck':   fileName = 'MobileCheckPage'; break;
       case 'dashboard': fileName = 'StockDashboard'; break;
-      case 'admin': fileName = 'AdminPage'; break;
-      default: fileName = 'Login'; break;
+      case 'admin':    fileName = 'AdminPage';        break;
+      default:         fileName = 'Login';            break;
     }
 
     // 用模板注入 APP_URL，避免客户端异步获取 URL 导致移动端 redirect blocked

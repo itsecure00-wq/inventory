@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>库存盘点</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:       #d32f2f;
+      --red-light: #ffcdd2;
+      --gray:      #757575;
+      --gray-bg:   #f5f5f5;
+      --border:    #e0e0e0;
+      --text:      #212121;
+      --white:     #ffffff;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif;
+      background: var(--gray-bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ════════════════════════════════
+       LOGIN VIEW
+    ════════════════════════════════ */
+    #loginView {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 32px 24px;
+      background: var(--white);
+    }
+    .login-logo  { font-size: 52px; margin-bottom: 8px; }
+    .login-brand { font-size: 16px; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+    .login-sub   { font-size: 12px; color: var(--gray); margin-bottom: 40px; }
+
+    .login-form   { width: 100%; max-width: 320px; }
+    .form-group   { margin-bottom: 16px; }
+    .form-label   { display: block; font-size: 12px; color: var(--gray); margin-bottom: 6px; font-weight: 500; }
+    .form-input   {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 15px; outline: none; transition: border-color .2s;
+      -webkit-appearance: none;
+    }
+    .form-input:focus { border-color: var(--red); }
+
+    .login-btn {
+      width: 100%; padding: 13px;
+      background: var(--red); color: var(--white);
+      border: none; border-radius: 8px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      margin-top: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity .2s;
+    }
+    .login-btn:active   { opacity: .85; }
+    .login-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+    .btn-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+      border-radius: 50%; animation: spin .7s linear infinite; display: none;
+    }
+    .login-error {
+      margin-top: 12px; padding: 10px 14px;
+      background: #fce4e4; color: var(--red);
+      border-radius: 6px; font-size: 13px; text-align: center; display: none;
+    }
+
+    /* ════════════════════════════════
+       CHECK VIEW
+    ════════════════════════════════ */
+    #checkView { display: none; min-height: 100vh; }
+
+    /* Topbar */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--red); color: var(--white);
+      padding: 11px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    .topbar-title { font-size: 15px; font-weight: 600; }
+    .topbar-sub   { font-size: 11px; opacity: .8; margin-top: 1px; }
+    .logout-btn {
+      background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.35);
+      color: var(--white); padding: 5px 11px; border-radius: 6px;
+      font-size: 12px; cursor: pointer; white-space: nowrap;
+    }
+
+    /* Progress */
+    .progress-wrap {
+      background: var(--white); padding: 10px 16px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--gray); margin-bottom: 5px;
+    }
+    .progress-track { height: 5px; background: var(--red-light); border-radius: 3px; overflow: hidden; }
+    .progress-fill  { height: 100%; background: var(--red); border-radius: 3px; transition: width .4s ease; width: 0%; }
+
+    /* Category tabs */
+    .cat-tabs {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      display: flex; overflow-x: auto;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .cat-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex: 0 0 auto; padding: 9px 13px;
+      font-size: 12px; color: var(--gray);
+      cursor: pointer; white-space: nowrap;
+      border-bottom: 2px solid transparent; transition: all .2s;
+    }
+    .cat-tab.active { color: var(--red); border-bottom-color: var(--red); font-weight: 600; }
+
+    /* Status / spinner area */
+    .status-area {
+      padding: 48px 24px; text-align: center;
+      color: var(--gray); font-size: 14px;
+    }
+    .spinner {
+      width: 30px; height: 30px; margin: 0 auto 12px;
+      border: 3px solid var(--red-light); border-top-color: var(--red);
+      border-radius: 50%; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Item cards */
+    .items-list { padding: 6px 0 100px; }
+    .item-card {
+      background: var(--white); margin: 6px 10px; border-radius: 10px;
+      padding: 12px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .item-card.filled { border-left: 3px solid #43a047; }
+
+    .item-img {
+      width: 52px; height: 52px; border-radius: 6px; object-fit: cover;
+      background: var(--gray-bg); flex-shrink: 0;
+    }
+    .item-info  { flex: 1; min-width: 0; }
+    .item-name  { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-meta  { font-size: 11px; color: var(--gray); margin-top: 2px; }
+    .item-status {
+      font-size: 10px; padding: 2px 6px; border-radius: 10px;
+      display: inline-block; margin-top: 4px;
+    }
+    .item-status.ok       { background: #e8f5e9; color: #2e7d32; }
+    .item-status.low      { background: #fff3e0; color: #e65100; }
+    .item-status.critical { background: #fce4e4; color: var(--red); }
+    .item-status.checked  { background: #e8f5e9; color: #2e7d32; }
+
+    .qty-wrap  { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .qty-input {
+      width: 60px; padding: 6px 8px;
+      border: 1.5px solid var(--border); border-radius: 6px;
+      font-size: 15px; text-align: center; outline: none; -webkit-appearance: none;
+    }
+    .qty-input:focus     { border-color: var(--red); }
+    .qty-input.has-value { border-color: #43a047; background: #f1f8f1; }
+    .qty-unit { font-size: 11px; color: var(--gray); white-space: nowrap; }
+
+    /* Bottom bar */
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--white); border-top: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 -2px 8px rgba(0,0,0,.1); z-index: 90;
+    }
+    .bottom-count { font-size: 13px; color: var(--gray); }
+    .bottom-count strong { color: var(--text); }
+    .submit-btn {
+      background: var(--red); color: var(--white);
+      border: none; border-radius: 8px;
+      padding: 10px 20px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: opacity .2s;
+    }
+    .submit-btn:active   { opacity: .85; }
+    .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.5);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-box {
+      background: var(--white); border-radius: 12px;
+      padding: 24px 20px; width: 100%; max-width: 320px; text-align: center;
+    }
+    .modal-icon  { font-size: 40px; margin-bottom: 10px; }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .modal-msg   { font-size: 13px; color: var(--gray); margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; }
+    .modal-btn {
+      background: var(--red); color: var(--white); border: none;
+      border-radius: 8px; padding: 10px 24px;
+      font-size: 14px; font-weight: 600; cursor: pointer; width: 100%;
+    }
+    .modal-btn-outline {
+      background: transparent; color: var(--text);
+      border: 1.5px solid var(--border); border-radius: 8px;
+      padding: 10px 24px; font-size: 14px; cursor: pointer;
+      width: 100%; margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  View 1 · Login                                        -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="loginView">
+  <div class="login-logo">🔥</div>
+  <div class="login-brand">GLOBAL CHAIN F&amp;B</div>
+  <div class="login-sub">库存管理系统 · 员工盘点</div>
+
+  <div class="login-form">
+    <div class="form-group">
+      <label class="form-label" for="usernameInput">员工编号</label>
+      <input class="form-input" id="usernameInput" type="text"
+             inputmode="text" autocapitalize="off" autocorrect="off"
+             placeholder="请输入员工编号">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="passwordInput">密码</label>
+      <input class="form-input" id="passwordInput" type="password" placeholder="请输入密码">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">
+      <span class="btn-spinner" id="btnSpinner"></span>
+      <span id="btnText">登录</span>
+    </button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  View 2 · Check interface                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="checkView">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">🔥 库存盘点</div>
+      <div class="topbar-sub" id="staffLabel"></div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">退出</button>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="progressText">盘点进度</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- Category tabs -->
+  <div class="cat-tabs" id="catTabs"></div>
+
+  <!-- Status / loading -->
+  <div class="status-area" id="statusArea">
+    <div class="spinner"></div>
+    <div>正在加载盘点数据...</div>
+  </div>
+
+  <!-- Item cards -->
+  <div class="items-list" id="itemsList" style="display:none"></div>
+
+  <!-- Fixed bottom bar -->
+  <div class="bottom-bar">
+    <div class="bottom-count">
+      已填写 <strong id="filledCount">0</strong> / <span id="totalCount">0</span>
+    </div>
+    <button class="submit-btn" id="submitBtn" onclick="confirmSubmit()" disabled>
+      提交盘点记录
+    </button>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModalOverlay(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-icon" id="modalIcon"></div>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-msg" id="modalMsg"></div>
+    <button class="modal-btn" id="modalPrimaryBtn"></button>
+    <button class="modal-btn-outline" id="modalSecondaryBtn" style="display:none"></button>
+  </div>
+</div>
+
+<script>
+  /* ── Server-injected constant ── */
+  var APP_URL = '<?= appUrl ?>';
+
+  /* ── localStorage keys ── */
+  var LS_USER_KEY   = 'ims_user';
+  var DRAFT_PREFIX  = 'mckd_';
+
+  /* ── State ── */
+  var currentUser  = null;
+  var allItems     = [];
+  var currentCat   = '全部';
+  var submitting   = false;
+
+  /* ════════════════════════════════
+     INIT
+  ════════════════════════════════ */
+  window.onload = function() {
+    var stored = localStorage.getItem(LS_USER_KEY);
+    if (stored) {
+      try {
+        var user = JSON.parse(stored);
+        if (user && user.success) {
+          currentUser = user;
+          showCheck();
+          return;
+        }
+      } catch (e) {}
+      localStorage.removeItem(LS_USER_KEY);
+    }
+    showLogin();
+  };
+
+  /* ════════════════════════════════
+     LOGIN
+  ════════════════════════════════ */
+  function showLogin() {
+    document.getElementById('loginView').style.display  = 'flex';
+    document.getElementById('checkView').style.display  = 'none';
+  }
+
+  /* Enter key triggers login */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') {
+      doLogin();
+    }
+  });
+
+  function doLogin() {
+    var u = document.getElementById('usernameInput').value.trim();
+    var p = document.getElementById('passwordInput').value;
+    if (!u || !p) { showLoginError('请填写员工编号和密码'); return; }
+    setLoginLoading(true);
+    clearLoginError();
+    google.script.run
+      .withSuccessHandler(onLoginResult)
+      .withFailureHandler(onLoginError)
+      .verifyStaff(u, p);
+  }
+
+  function onLoginResult(result) {
+    setLoginLoading(false);
+    if (result && result.success) {
+      localStorage.setItem(LS_USER_KEY, JSON.stringify(result));
+      currentUser = result;
+      showCheck();
+    } else {
+      showLoginError((result && result.error) || '登录失败，请重试');
+    }
+  }
+
+  function onLoginError(err) {
+    setLoginLoading(false);
+    showLoginError('网络错误，请检查连接后重试');
+  }
+
+  function setLoginLoading(on) {
+    document.getElementById('loginBtn').disabled            = on;
+    document.getElementById('btnSpinner').style.display     = on ? 'block' : 'none';
+    document.getElementById('btnText').textContent          = on ? '登录中...' : '登录';
+  }
+
+  function showLoginError(msg) {
+    var el = document.getElementById('loginError');
+    el.textContent    = msg;
+    el.style.display  = 'block';
+  }
+
+  function clearLoginError() {
+    document.getElementById('loginError').style.display = 'none';
+  }
+
+  /* ════════════════════════════════
+     CHECK VIEW
+  ════════════════════════════════ */
+  function showCheck() {
+    document.getElementById('loginView').style.display  = 'none';
+    document.getElementById('checkView').style.display  = 'block';
+    document.getElementById('staffLabel').textContent   =
+      (currentUser.name || currentUser.username) + ' · ' + (currentUser.role || '员工');
+    loadItems();
+  }
+
+  function loadItems() {
+    document.getElementById('statusArea').style.display   = 'block';
+    document.getElementById('itemsList').style.display    = 'none';
+    document.getElementById('catTabs').innerHTML          = '';
+    document.getElementById('statusArea').innerHTML       =
+      '<div class="spinner"></div><div>正在加载盘点数据...</div>';
+
+    google.script.run
+      .withSuccessHandler(onItemsLoaded)
+      .withFailureHandler(onItemsError)
+      .getTodayCheckItems(currentUser.username);
+  }
+
+  function onItemsError() {
+    document.getElementById('statusArea').innerHTML =
+      '<div style="font-size:32px;margin-bottom:10px">⚠️</div>' +
+      '<div style="color:#d32f2f;margin-bottom:14px">加载失败，请刷新重试</div>' +
+      '<button onclick="loadItems()" style="padding:8px 20px;background:#d32f2f;' +
+      'color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">重试</button>';
+  }
+
+  function onItemsLoaded(resp) {
+    if (!resp || !resp.success) { onItemsError(); return; }
+    allItems = resp.items || [];
+    document.getElementById('totalCount').textContent = allItems.length;
+    buildCatTabs(resp.categories);
+    renderItems(currentCat);
+    restoreDrafts();
+    updateProgress();
+  }
+
+  /* ════════════════════════════════
+     CATEGORY TABS
+  ════════════════════════════════ */
+  function buildCatTabs(categories) {
+    var tabs = document.getElementById('catTabs');
+    tabs.innerHTML = '';
+    var cats = ['全部'];
+
+    if (categories) {
+      Object.keys(categories).forEach(function(c) { cats.push(c); });
+    } else {
+      var seen = {};
+      allItems.forEach(function(it) {
+        if (!seen[it.category]) { seen[it.category] = true; cats.push(it.category); }
+      });
+    }
+
+    cats.forEach(function(c) {
+      var el = document.createElement('div');
+      el.className = 'cat-tab' + (c === currentCat ? ' active' : '');
+      el.textContent = c;
+      el.onclick = function() { selectCat(c); };
+      tabs.appendChild(el);
+    });
+  }
+
+  function selectCat(cat) {
+    currentCat = cat;
+    document.querySelectorAll('.cat-tab').forEach(function(el) {
+      el.classList.toggle('active', el.textContent === cat);
+    });
+    renderItems(cat);
+    restoreDrafts();
+  }
+
+  /* ════════════════════════════════
+     RENDER ITEMS
+  ════════════════════════════════ */
+  var PLACEHOLDER_IMG = 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="52" height="52">' +
+    '<rect width="52" height="52" fill="#f0f0f0"/>' +
+    '<text x="26" y="33" font-size="22" text-anchor="middle">📦</text></svg>'
+  );
+
+  function renderItems(cat) {
+    var list     = document.getElementById('itemsList');
+    var filtered = cat === '全部'
+      ? allItems
+      : allItems.filter(function(it) { return it.category === cat; });
+
+    if (filtered.length === 0) {
+      document.getElementById('statusArea').style.display  = 'block';
+      document.getElementById('statusArea').innerHTML      =
+        '<div style="font-size:32px;margin-bottom:8px">📭</div>' +
+        '<div>该分类暂无需盘点的物品</div>';
+      list.style.display = 'none';
+      return;
+    }
+
+    document.getElementById('statusArea').style.display = 'none';
+    list.style.display = 'block';
+    list.innerHTML = '';
+    filtered.forEach(function(item) { list.appendChild(makeCard(item)); });
+  }
+
+  function makeCard(item) {
+    var draft    = localStorage.getItem(DRAFT_PREFIX + item.id);
+    var hasDraft = draft !== null && draft !== '';
+
+    var card = document.createElement('div');
+    card.className = 'item-card' + (hasDraft ? ' filled' : '');
+    card.id = 'card_' + item.id;
+
+    /* Status badge */
+    var sc = 'ok', st = '正常';
+    if (item.checked)                           { sc = 'checked';  st = '已盘'; }
+    else if (item.currentQty <= 0)              { sc = 'critical'; st = '缺货'; }
+    else if (item.currentQty <= item.minStock)  { sc = 'low';      st = '偏低'; }
+
+    /* Image */
+    var imgEl = document.createElement('img');
+    imgEl.className = 'item-img';
+    imgEl.src       = (item.imageUrl && item.imageUrl.trim()) ? item.imageUrl.trim() : PLACEHOLDER_IMG;
+    imgEl.alt       = item.name;
+    imgEl.loading   = 'lazy';
+    imgEl.onerror   = function() { this.src = PLACEHOLDER_IMG; };
+
+    /* Info */
+    var infoEl = document.createElement('div');
+    infoEl.className = 'item-info';
+    infoEl.innerHTML =
+      '<div class="item-name">' + escHtml(item.name) + '</div>' +
+      '<div class="item-meta">库存: ' + item.currentQty + ' ' + escHtml(item.unit) + '</div>' +
+      '<span class="item-status ' + sc + '">' + st + '</span>';
+
+    /* Qty input */
+    var qtyWrap = document.createElement('div');
+    qtyWrap.className = 'qty-wrap';
+
+    var input = document.createElement('input');
+    input.type        = 'number';
+    input.inputMode   = 'decimal';
+    input.className   = 'qty-input' + (hasDraft ? ' has-value' : '');
+    input.id          = 'qty_' + item.id;
+    input.value       = hasDraft ? draft : '';
+    input.placeholder = '数量';
+    input.min         = '0';
+    input.step        = '0.5';
+    input.dataset.itemId = item.id;
+    input.addEventListener('input', function() { onQtyInput(this, item); });
+
+    var unitEl = document.createElement('div');
+    unitEl.className   = 'qty-unit';
+    unitEl.textContent = item.unit;
+
+    qtyWrap.appendChild(input);
+    qtyWrap.appendChild(unitEl);
+
+    card.appendChild(imgEl);
+    card.appendChild(infoEl);
+    card.appendChild(qtyWrap);
+    return card;
+  }
+
+  function onQtyInput(input, item) {
+    var val = input.value.trim();
+    var cardEl = document.getElementById('card_' + item.id);
+    if (val !== '') {
+      localStorage.setItem(DRAFT_PREFIX + item.id, val);
+      input.classList.add('has-value');
+      if (cardEl) cardEl.classList.add('filled');
+    } else {
+      localStorage.removeItem(DRAFT_PREFIX + item.id);
+      input.classList.remove('has-value');
+      if (cardEl) cardEl.classList.remove('filled');
+    }
+    updateProgress();
+  }
+
+  /* ════════════════════════════════
+     DRAFTS (localStorage)
+  ════════════════════════════════ */
+  function restoreDrafts() {
+    allItems.forEach(function(item) {
+      var draft = localStorage.getItem(DRAFT_PREFIX + item.id);
+      if (draft !== null && draft !== '') {
+        var input  = document.getElementById('qty_' + item.id);
+        var cardEl = document.getElementById('card_' + item.id);
+        if (input) {
+          input.value = draft;
+          input.classList.add('has-value');
+        }
+        if (cardEl) cardEl.classList.add('filled');
+      }
+    });
+  }
+
+  function clearDrafts() {
+    allItems.forEach(function(item) {
+      localStorage.removeItem(DRAFT_PREFIX + item.id);
+    });
+  }
+
+  /* ════════════════════════════════
+     PROGRESS
+  ════════════════════════════════ */
+  function updateProgress() {
+    var filled = 0;
+    allItems.forEach(function(item) {
+      var v = localStorage.getItem(DRAFT_PREFIX + item.id);
+      if (v !== null && v !== '') filled++;
+    });
+    var total = allItems.length;
+    var pct   = total > 0 ? Math.round(filled / total * 100) : 0;
+
+    document.getElementById('filledCount').textContent     = filled;
+    document.getElementById('totalCount').textContent      = total;
+    document.getElementById('progressPct').textContent     = pct + '%';
+    document.getElementById('progressFill').style.width   = pct + '%';
+    document.getElementById('submitBtn').disabled          = (filled === 0);
+  }
+
+  /* ════════════════════════════════
+     SUBMIT
+  ════════════════════════════════ */
+  function confirmSubmit() {
+    if (submitting) return;
+    var items   = getFilledItems();
+    var filled  = items.length;
+    var missing = allItems.length - filled;
+
+    if (missing > 0) {
+      showModal('📋', '确认提交？',
+        '已填写 ' + filled + ' 项，还有 ' + missing + ' 项未填。\n确定要提交吗？',
+        '确认提交', doSubmit,
+        '继续填写', closeModal);
+    } else {
+      showModal('✅', '确认提交',
+        '所有 ' + filled + ' 项已填写完毕，确认提交盘点记录？',
+        '提交', doSubmit,
+        '取消', closeModal);
+    }
+  }
+
+  function getFilledItems() {
+    var result = [];
+    allItems.forEach(function(item) {
+      var v = localStorage.getItem(DRAFT_PREFIX + item.id);
+      if (v !== null && v !== '') {
+        result.push({ id: item.id, name: item.name, qty: parseFloat(v) || 0, unit: item.unit });
+      }
+    });
+    return result;
+  }
+
+  function doSubmit() {
+    closeModal();
+    if (submitting) return;
+    submitting = true;
+    document.getElementById('submitBtn').disabled   = true;
+    document.getElementById('submitBtn').textContent = '提交中...';
+
+    google.script.run
+      .withSuccessHandler(onSubmitDone)
+      .withFailureHandler(onSubmitError)
+      .submitCheckRecord(currentUser.username, getFilledItems());
+  }
+
+  function onSubmitDone(resp) {
+    submitting = false;
+    document.getElementById('submitBtn').disabled    = false;
+    document.getElementById('submitBtn').textContent = '提交盘点记录';
+
+    if (!resp || !resp.success) {
+      showModal('❌', '提交失败', (resp && resp.error) || '未知错误，请重试', '关闭', closeModal);
+      return;
+    }
+
+    /* Clear drafts and reset inputs */
+    clearDrafts();
+    allItems.forEach(function(item) {
+      var input  = document.getElementById('qty_' + item.id);
+      var cardEl = document.getElementById('card_' + item.id);
+      if (input)  { input.value = ''; input.classList.remove('has-value'); }
+      if (cardEl) cardEl.classList.remove('filled');
+    });
+    updateProgress();
+
+    /* Build success message */
+    var abnormal = resp.abnormalItems && resp.abnormalItems.length > 0;
+    var msg = '成功提交 ' + (resp.updated || 0) + ' 条盘点记录。';
+    if (abnormal) {
+      msg += '\n\n⚠️ 发现 ' + resp.abnormalItems.length + ' 项异常：\n';
+      resp.abnormalItems.slice(0, 5).forEach(function(it) {
+        msg += '· ' + (it.name || it.itemName || '') + '\n';
+      });
+    }
+    showModal(abnormal ? '⚠️' : '✅', '提交成功', msg, '确认', closeModal);
+  }
+
+  function onSubmitError() {
+    submitting = false;
+    document.getElementById('submitBtn').disabled    = false;
+    document.getElementById('submitBtn').textContent = '提交盘点记录';
+    showModal('❌', '网络错误', '提交失败，请检查网络后重试', '关闭', closeModal);
+  }
+
+  /* ════════════════════════════════
+     LOGOUT
+  ════════════════════════════════ */
+  function doLogout() {
+    localStorage.removeItem(LS_USER_KEY);
+    clearDrafts();
+    currentUser = null;
+    allItems    = [];
+    currentCat  = '全部';
+    document.getElementById('usernameInput').value = '';
+    document.getElementById('passwordInput').value = '';
+    clearLoginError();
+    showLogin();
+  }
+
+  /* ════════════════════════════════
+     MODAL
+  ════════════════════════════════ */
+  function showModal(icon, title, msg, primaryLabel, primaryFn, secondaryLabel, secondaryFn) {
+    document.getElementById('modalIcon').textContent  = icon;
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMsg').textContent   = msg;
+
+    var pBtn = document.getElementById('modalPrimaryBtn');
+    pBtn.textContent = primaryLabel;
+    pBtn.onclick     = primaryFn || closeModal;
+
+    var sBtn = document.getElementById('modalSecondaryBtn');
+    if (secondaryLabel) {
+      sBtn.textContent    = secondaryLabel;
+      sBtn.onclick        = secondaryFn || closeModal;
+      sBtn.style.display  = 'block';
+    } else {
+      sBtn.style.display  = 'none';
+    }
+
+    document.getElementById('modalOverlay').style.display = 'flex';
+  }
+
+  function closeModalOverlay(e) {
+    if (e && e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').style.display = 'none';
+  }
+
+  /* ════════════════════════════════
+     UTILITY
+  ════════════════════════════════ */
+  function escHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
