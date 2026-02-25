@@ -215,11 +215,12 @@
     /* ── Add-item FAB ── */
     .add-item-fab {
       position: fixed; bottom: 88px; right: 16px; z-index: 150;
-      width: 48px; height: 48px; border-radius: 50%;
+      width: 52px; height: 52px; border-radius: 50%;
       background: #37474f; color: #fff;
-      border: none; font-size: 26px; line-height: 1;
-      box-shadow: 0 3px 8px rgba(0,0,0,.35);
-      cursor: pointer; display: none;
+      border: none; font-size: 28px; line-height: 1;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,.4);
+      cursor: pointer;
     }
 
     /* ── Add-item sheet modal ── */
@@ -270,6 +271,31 @@
       padding: 9px 18px; border-radius: 20px; font-size: 13px;
       white-space: nowrap; z-index: 300; display: none;
     }
+
+    /* ── Photo lightbox ── */
+    #imgLightbox {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.88);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    #imgLightbox.show { display: flex; }
+    #imgLightbox img {
+      max-width: 100%; max-height: 75vh;
+      border-radius: 10px; object-fit: contain;
+      box-shadow: 0 4px 24px rgba(0,0,0,.5);
+    }
+    #imgLightboxName {
+      color: #fff; font-size: 15px; font-weight: 600;
+      margin-top: 14px; text-align: center;
+    }
+    #imgLightboxClose {
+      position: absolute; top: 16px; right: 20px;
+      color: #fff; font-size: 28px; cursor: pointer;
+      line-height: 1; opacity: .85;
+    }
+    .item-img { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -348,6 +374,13 @@
     </button>
   </div>
 
+</div>
+
+<!-- Photo lightbox -->
+<div id="imgLightbox">
+  <span id="imgLightboxClose">✕</span>
+  <img id="imgLightboxImg" src="" alt="">
+  <div id="imgLightboxName"></div>
 </div>
 
 <!-- Add-item FAB (Manager/Boss only) -->
@@ -639,10 +672,17 @@
     /* Image */
     var imgEl = document.createElement('img');
     imgEl.className = 'item-img';
-    imgEl.src       = (item.imageUrl && item.imageUrl.trim()) ? item.imageUrl.trim() : PLACEHOLDER_IMG;
-    imgEl.alt       = item.name;
-    imgEl.loading   = 'lazy';
-    imgEl.onerror   = function() { this.src = PLACEHOLDER_IMG; };
+    var _realUrl = (item.imageUrl && item.imageUrl.trim() && /^https?:\/\//.test(item.imageUrl.trim()))
+                  ? item.imageUrl.trim() : '';
+    imgEl.src     = _realUrl || PLACEHOLDER_IMG;
+    imgEl.alt     = item.name;
+    imgEl.loading = 'lazy';
+    imgEl.onerror = function() { this.src = PLACEHOLDER_IMG; };
+    if (_realUrl) {
+      imgEl.onclick = (function(s, n) {
+        return function(e) { e.stopPropagation(); showImgLightbox(s, n); };
+      })(_realUrl, item.name);
+    }
 
     /* Info */
     var infoEl = document.createElement('div');
@@ -1013,6 +1053,29 @@
     if (_toastTimer) clearTimeout(_toastTimer);
     _toastTimer = setTimeout(function() { el.style.display = 'none'; }, 2800);
   }
+
+  /* ── Photo lightbox ── */
+  function showImgLightbox(src, name) {
+    document.getElementById('imgLightboxImg').src          = src;
+    document.getElementById('imgLightboxName').textContent = name;
+    document.getElementById('imgLightbox').classList.add('show');
+  }
+  function closeImgLightbox() {
+    document.getElementById('imgLightbox').classList.remove('show');
+    document.getElementById('imgLightboxImg').src = '';
+  }
+  // Lightbox event listeners (run once)
+  (function() {
+    var lb = document.getElementById('imgLightbox');
+    lb.addEventListener('click', closeImgLightbox);
+    document.getElementById('imgLightboxImg').addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+    document.getElementById('imgLightboxClose').addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeImgLightbox();
+    });
+  })();
 </script>
 </body>
 </html>
