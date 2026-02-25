@@ -190,7 +190,7 @@ function verifyStaff(username, password) {
     } else {
       var sheet = SpreadsheetApp.openById(IMS_CONFIG.SS_ID).getSheetByName('Staff_DB');
       data = sheet.getDataRange().getValues();
-      try { cache.put('staffList', JSON.stringify(data), 60); } catch(e) {}
+      try { cache.put('staffList', JSON.stringify(data), 300); } catch(e) {}
     }
     for (var i = 1; i < data.length; i++) {
       if (String(data[i][0]).trim() === String(username).trim() &&
@@ -209,6 +209,20 @@ function verifyStaff(username, password) {
     Logger.log('verifyStaff error: ' + e.message);
     return { success: false, error: '系统错误: ' + e.message };
   }
+}
+
+// ============================================================
+// verifyStaffAndGetItems — login + items in one round trip
+// ============================================================
+function verifyStaffAndGetItems(username, password) {
+  var loginResult = verifyStaff(username, password);
+  if (!loginResult.success) return loginResult;
+  var itemsResult = getTodayCheckItems(username);
+  if (itemsResult && itemsResult.success) {
+    loginResult.items      = itemsResult.items      || [];
+    loginResult.categories = itemsResult.categories || {};
+  }
+  return loginResult;
 }
 
 // ============================================================

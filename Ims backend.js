@@ -201,7 +201,7 @@ function getTodayCheckItems(staffName) {
       skippedCategories: skipped,
       assignedCats: assignedCats
     };
-    try { _cache.put(_ckey, JSON.stringify(_result), 60); } catch(e) {}
+    try { _cache.put(_ckey, JSON.stringify(_result), 300); } catch(e) {}
     return _result;
 
   } catch (e) {
@@ -684,7 +684,7 @@ function getDashboardAll() {
       poList: poList,
       recentHistory: recentHistory
     };
-    try { _cache.put('dashboardAll', JSON.stringify(_dashResult), 90); } catch(e) {}
+    try { _cache.put('dashboardAll', JSON.stringify(_dashResult), 300); } catch(e) {}
     return _dashResult;
 
   } catch (e) {
@@ -1150,6 +1150,13 @@ function createItem(callerUsername, itemData) {
     newRow[COL.NOTES]       = '';
 
     sheet.appendRow(newRow);
+    // Invalidate caches so the new item appears immediately on next load
+    try {
+      CacheService.getScriptCache().removeAll([
+        'dashboardAll',
+        'checkItems_' + String(callerUsername)
+      ]);
+    } catch(e) {}
     return { success: true, itemId: itemId };
   } catch (e) {
     Logger.log('createItem error: ' + e.message);

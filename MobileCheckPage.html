@@ -458,6 +458,9 @@
   /* ── localStorage keys ── */
   var LS_USER_KEY   = 'ims_user';
   var DRAFT_PREFIX  = 'mckd_';
+  var LS_ITEMS_KEY  = 'mck_items';   // cached items response
+  var LS_ITEMS_TS   = 'mck_items_ts'; // timestamp of that cache
+  var ITEMS_MAX_AGE = 5 * 60 * 1000; // 5 minutes before forced refresh
 
   /* ── State ── */
   var currentUser  = null;
@@ -476,6 +479,7 @@
         if (user && user.success) {
           currentUser = user;
           showCheck();
+          loadItemsWithCache(); // stale-while-revalidate
           return;
         }
       } catch (e) {}
@@ -508,15 +512,28 @@
     google.script.run
       .withSuccessHandler(onLoginResult)
       .withFailureHandler(onLoginError)
-      .verifyStaff(u, p);
+      .verifyStaffAndGetItems(u, p);
   }
 
   function onLoginResult(result) {
     setLoginLoading(false);
     if (result && result.success) {
-      localStorage.setItem(LS_USER_KEY, JSON.stringify(result));
-      currentUser = result;
+      // Strip items from the stored user object to keep localStorage small
+      var userData = {
+        success: true, username: result.username,
+        role: result.role, permissions: result.permissions, name: result.name
+      };
+      localStorage.setItem(LS_USER_KEY, JSON.stringify(userData));
+      currentUser = userData;
       showCheck();
+      // Items were returned in the same call — no second round trip needed
+      if (result.items && result.items.length >= 0) {
+        var itemsResp = { success: true, items: result.items, categories: result.categories || {} };
+        saveItemsCache(itemsResp);
+        onItemsLoaded(itemsResp, true);
+      } else {
+        loadItems(false); // fallback
+      }
     } else {
       showLoginError((result && result.error) || '登录失败，请重试');
     }
@@ -556,19 +573,28 @@
     if (_role === 'manager' || _role === 'boss') {
       document.getElementById('addItemFab').style.display = 'flex';
     }
-    loadItems();
+    // Item loading is handled by the caller (loadItemsWithCache or onLoginResult)
   }
 
-  function loadItems() {
-    document.getElementById('statusArea').style.display   = 'block';
-    document.getElementById('itemsList').style.display    = 'none';
-    document.getElementById('catTabs').innerHTML          = '';
-    document.getElementById('statusArea').innerHTML       =
-      '<div class="spinner"></div><div>正在加载盘点数据...</div>';
-
+  function loadItems(silent) {
+    if (!silent) {
+      document.getElementById('statusArea').style.display   = 'block';
+      document.getElementById('itemsList').style.display    = 'none';
+      document.getElementById('catTabs').innerHTML          = '';
+      document.getElementById('statusArea').innerHTML       =
+        '<div class="spinner"></div><div>正在加载盘点数据...</div>';
+    }
     google.script.run
-      .withSuccessHandler(onItemsLoaded)
-      .withFailureHandler(onItemsError)
+      .withSuccessHandler(function(resp) {
+        if (!silent) {
+          onItemsLoaded(resp, false);
+        } else if (resp && resp.success) {
+          // Silent background refresh: update cache + allItems without re-rendering
+          saveItemsCache(resp);
+          allItems = resp.items || [];
+        }
+      })
+      .withFailureHandler(silent ? function(){} : onItemsError)
       .getTodayCheckItems(currentUser.username);
   }
 
@@ -576,12 +602,40 @@
     document.getElementById('statusArea').innerHTML =
       '<div style="font-size:32px;margin-bottom:10px">⚠️</div>' +
       '<div style="color:#d32f2f;margin-bottom:14px">加载失败，请刷新重试</div>' +
-      '<button onclick="loadItems()" style="padding:8px 20px;background:#d32f2f;' +
+      '<button onclick="loadItems(false)" style="padding:8px 20px;background:#d32f2f;' +
       'color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">重试</button>';
   }
 
-  function onItemsLoaded(resp) {
-    if (!resp || !resp.success) { onItemsError(); return; }
+  /* Save items response to localStorage with timestamp */
+  function saveItemsCache(resp) {
+    try {
+      localStorage.setItem(LS_ITEMS_KEY, JSON.stringify(resp));
+      localStorage.setItem(LS_ITEMS_TS,  String(Date.now()));
+    } catch(e) {}
+  }
+
+  /* Instant load from cache; background-refresh silently if cache is fresh */
+  function loadItemsWithCache() {
+    var cachedStr = localStorage.getItem(LS_ITEMS_KEY);
+    var cachedTs  = localStorage.getItem(LS_ITEMS_TS);
+    var cacheAge  = cachedTs ? (Date.now() - parseInt(cachedTs, 10)) : Infinity;
+
+    if (cachedStr && cacheAge < ITEMS_MAX_AGE) {
+      try {
+        var cached = JSON.parse(cachedStr);
+        if (cached && cached.success) {
+          onItemsLoaded(cached, true);  // render instantly from cache
+          loadItems(true);              // silently refresh in background
+          return;
+        }
+      } catch(e) {}
+    }
+    loadItems(false); // no valid cache — show spinner and fetch
+  }
+
+  function onItemsLoaded(resp, fromCache) {
+    if (!resp || !resp.success) { if (!fromCache) onItemsError(); return; }
+    if (!fromCache) { saveItemsCache(resp); }
     allItems = resp.items || [];
     document.getElementById('totalCount').textContent = allItems.length;
     buildCatTabs(resp.categories);
@@ -869,6 +923,8 @@
   ════════════════════════════════ */
   function doLogout() {
     localStorage.removeItem(LS_USER_KEY);
+    localStorage.removeItem(LS_ITEMS_KEY);
+    localStorage.removeItem(LS_ITEMS_TS);
     clearDrafts();
     currentUser = null;
     allItems    = [];
@@ -1014,7 +1070,10 @@
           if (resp && resp.success) {
             closeAddItemOverlayDirect();
             showToast('✅ 已添加：' + name);
-            loadItems(); // refresh list
+            // Clear client cache so refreshed list includes the new item
+            localStorage.removeItem(LS_ITEMS_KEY);
+            localStorage.removeItem(LS_ITEMS_TS);
+            loadItems(false); // refresh list
           } else {
             showToast('❌ ' + ((resp && resp.error) || '添加失败'));
           }
